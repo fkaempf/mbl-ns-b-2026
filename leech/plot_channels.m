@@ -57,8 +57,8 @@ for k = 1:numel(ax)
     box(ax(k), 'off')
 end
 
-% --- red vertical lines at V2 spike times (V2 and I2 panels only) ---
-for k = 2:numel(ax)
+% --- red vertical lines at V2 spike times in every panel ---
+for k = 1:numel(ax)
     yl = ylim(ax(k));
     hold(ax(k), 'on')
     for s = 1:numel(v2tms)
