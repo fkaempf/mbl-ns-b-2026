@@ -47,6 +47,22 @@ def circle_to_square_roi(cx, cy, r, width, height, pad=1.05):
     return x, y, w, h
 
 
+def circles_to_rois(circles, width: int, height: int, pad: float = 1.05) -> list[list[int]]:
+    """Convert placed circles [(cx, cy, r), ...] into clamped square ROIs [[x,y,w,h],...]
+    as plain ints, ready to write to config or hand to split_video."""
+    return [list(circle_to_square_roi(cx, cy, r, width, height, pad)) for cx, cy, r in circles]
+
+
+def save_split_rois(config_path: str | Path, rois: list[list[int]]) -> None:
+    """Write ``split.rois`` into the YAML config, preserving every other key."""
+    import yaml
+
+    config_path = Path(config_path)
+    data = yaml.safe_load(config_path.read_text()) or {}
+    data.setdefault("split", {})["rois"] = [list(map(int, r)) for r in rois]
+    config_path.write_text(yaml.safe_dump(data, sort_keys=False))
+
+
 def split_video(video_path: str | Path, out_dir: str | Path, rois: list[tuple]) -> list[Path]:
     """Write one cropped MP4 per ROI. ROIs are (x, y, w, h) in pixels."""
     import cv2

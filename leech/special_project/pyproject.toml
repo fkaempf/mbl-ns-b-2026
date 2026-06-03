@@ -19,8 +19,10 @@ dependencies = [
 dev = ["pytest>=8.0"]
 
 [project.scripts]
+leech-arena = "leecharena.app:main"
 leech-annotate = "leechtemplate.annotate:main"
 leech-arena-annotate = "leecharena.annotate:main"
+leech-arena-place = "leecharena.place:main"
 leech-arena-split = "leecharena.split:main"
 leech-arena-compress = "leecharena.compress:main"
 

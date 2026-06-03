@@ -26,6 +26,21 @@ from .video import VideoReader
 ROLES = ["anterior", "posterior", "middle"]
 
 
+def advance_role(role, leech_idx, roles=ROLES):
+    """Next (role, leech_idx) after placing a point on `role`.
+
+    Steps through `roles` in order; after the last role it wraps to the first and
+    bumps to the next leech. An unrecognized role restarts at the first role.
+    """
+    try:
+        i = roles.index(role)
+    except ValueError:
+        return roles[0], int(leech_idx)
+    if i + 1 < len(roles):
+        return roles[i + 1], int(leech_idx)
+    return roles[0], int(leech_idx) + 1
+
+
 def _xy_from_rowcol(points_rowcol: np.ndarray) -> np.ndarray:
     pts = np.atleast_2d(np.asarray(points_rowcol, dtype=float))
     return pts[:, [1, 0]]
@@ -64,6 +79,39 @@ def _build_rows(video_id, frame_idx, time_s, arena, food, leeches) -> list[dict]
             empty[f"{key}_y"] = np.nan
         return [empty]
     return [leech_row(idx, roles) for idx, roles in sorted(leeches.items())]
+
+
+def _is_missing(v) -> bool:
+    return v is None or (isinstance(v, float) and np.isnan(v))
+
+
+def annotation_from_rows(rows):
+    """Inverse of _build_rows: parse one frame's stored rows back into
+    (arena, food, leeches) for repopulating the GUI when revisiting a frame.
+
+    rows: list of dicts keyed by the store COLUMNS (e.g. df slice .to_dict('records')).
+    Returns (arena | None, food | None, leeches dict[int, dict[role, (x, y)]]).
+    """
+    rows = list(rows)
+    if not rows:
+        return None, None, {}
+    base = rows[0]
+    cx, cy, r = base.get("arena_cx"), base.get("arena_cy"), base.get("arena_r")
+    arena = None if _is_missing(cx) or _is_missing(cy) or _is_missing(r) \
+        else (float(cx), float(cy), float(r))
+    fx, fy = base.get("food_x"), base.get("food_y")
+    food = None if _is_missing(fx) or _is_missing(fy) else (float(fx), float(fy))
+
+    leeches: dict = {}
+    for row in rows:
+        idx = int(row["leech_idx"])
+        if idx < 0:
+            continue
+        for role, key in (("anterior", "ant"), ("posterior", "post"), ("middle", "mid")):
+            x, y = row.get(f"{key}_x"), row.get(f"{key}_y")
+            if not _is_missing(x) and not _is_missing(y):
+                leeches.setdefault(idx, {})[role] = (float(x), float(y))
+    return arena, food, leeches
 
 
 def launch(video_path: str | Path, config: Config) -> None:

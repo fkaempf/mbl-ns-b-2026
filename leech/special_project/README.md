@@ -87,15 +87,56 @@ hand-annotating a randomized sample of frames from single-dish MP4 clips. See
 
 Config: `arena_config.yaml`.
 
+## Unified app (recommended): one window, three tabs
+
+The whole pipeline is also available as a single napari app that shares **one
+viewer + one loaded video + one frame slider** across three tabs:
+
+- **Compress** — re-encode the loaded video with H.264 (CRF / preset / scale).
+- **Split** — build a mean/median composite, place one ellipse per dish (Hough
+  auto-detect or by hand), then save ROIs to config or split into clips.
+- **Annotate** — orientation annotation on the sampled frames (arena ellipse,
+  food, per-leech anterior/posterior/middle points), saved to the annotations CSV.
+
+```bash
+uv run leech-arena --video data/videos/raw.mp4
+# or, offline / without uv:
+.venv/bin/python -m leecharena.app --video data/videos/raw.mp4
+# launch bare and pick a video in the session dock:
+uv run leech-arena
+```
+
+Load (or switch) the video once in the **session** dock; every tab operates on
+that same video and the shared frame slider. The per-CLI tools below still work
+unchanged if you prefer a single-purpose command.
+
 ## 1. Split multi-dish recordings into single-dish clips (if needed)
+
+### Recommended: place dishes on a composite image in napari
+
+```bash
+uv run leech-arena-place --video data/videos/raw.mp4    # or launch bare and pick in-GUI
+```
+
+Does the whole split workflow in one window:
+1. **Composite** — pick the video, choose `mean`/`median` and an optional frame sample
+   (blank/0 = every frame), and click **Build composite**. Dishes are static so they
+   stay sharp while moving leeches wash out — a far better target than any single frame.
+2. **Dishes** — one editable ellipse per dish, pre-seeded by **Auto-detect dishes**
+   (Hough). Drag/resize/add/delete as needed.
+3. **Output** — **Save circles to config** writes `split.rois` to `arena_config.yaml`
+   for batch reuse, or **Split now** writes the cropped `*_dishN.mp4` clips immediately
+   (tick "compress" for H.264).
+
+### Headless / batch
 
 ```bash
 uv run leech-arena-split --video data/videos/raw.mp4 --out clips/
 ```
 
-Auto-detects dishes (Hough circles) and writes one cropped `*_dishN.mp4` per dish. If
-detection is unreliable, set `split.rois: [[x, y, w, h], ...]` in `arena_config.yaml`.
-Add `--compress` to re-encode the clips with H.264 as they are written.
+Uses `split.rois` from `arena_config.yaml` if set (e.g. saved from the placement tool),
+otherwise auto-detects dishes (Hough circles) on a sample frame. Writes one cropped
+`*_dishN.mp4` per dish. Add `--compress` to re-encode the clips with H.264 as written.
 
 ## 1b. Compress recordings (H.264)
 
