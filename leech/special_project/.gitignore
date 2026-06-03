@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+# raw research data / media — NEVER commit (videos are multi-GB)
+data/
+*.mp4
+*.avi
+*.mov
+.DS_Store
+# Template outputs are data products; ignore by default (commit deliberately if desired).
+template/*.csv
+template/*_calibration.json
+# arena tool data products
+clips/
+annotations/

@@ -1,0 +1,33 @@
+# Configuration for the leech arena-orientation annotation tool.
+
+paths:
+  clips_dir: "clips"                          # single-dish clips (splitter output / annotator input)
+  annotations: "annotations/annotations.csv"  # one row per leech per frame
+
+sampling:
+  n_sample: 30      # randomized frames to annotate per clip
+  seed: 0           # deterministic frame plan (same clip+seed -> same frames)
+
+# cv2.HoughCircles parameters for arena detection. Tune param2 down if the dish is
+# missed (more false positives), up if spurious circles appear. min/max_radius == 0
+# means "no limit"; set them (in pixels) once you know the dish size for robustness.
+hough:
+  dp: 1.2
+  min_dist: 1000.0  # one dish per annotation clip -> keep large (single strongest circle)
+  param1: 100.0
+  param2: 30.0
+  min_radius: 0
+  max_radius: 0
+
+# Splitter: leave rois empty to auto-detect dishes; otherwise list [x, y, w, h] boxes.
+split:
+  rois: []
+
+# H.264 compression. When enabled, splitter output clips are re-encoded; or use the
+# standalone `leech-arena-compress` CLI. crf: 18 (high quality) .. 32 (small file).
+# scale: resize factor (e.g. 0.5) or null to keep size.
+compression:
+  enabled: false
+  crf: 28
+  preset: medium
+  scale: null

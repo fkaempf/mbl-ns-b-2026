@@ -1,0 +1,35 @@
+[project]
+name = "leechtemplate"
+version = "0.1.0"
+description = "Canonical identified-cell template for leech segmental ganglia, digitized from figures"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.0",
+    "matplotlib>=3.8",
+    "pyyaml>=6.0",
+    "imageio>=2.31",
+    "napari[all]>=0.4.19",
+    "magicgui>=0.8",
+    "opencv-python-headless>=4.8",
+    "imageio-ffmpeg>=0.4",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+leech-annotate = "leechtemplate.annotate:main"
+leech-arena-annotate = "leecharena.annotate:main"
+leech-arena-split = "leecharena.split:main"
+leech-arena-compress = "leecharena.compress:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/leechtemplate", "src/leecharena"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

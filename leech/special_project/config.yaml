@@ -1,0 +1,18 @@
+# Configuration for the leech canonical-template annotation tool.
+# All parameters live here; nothing is hardcoded in the modules.
+
+paths:
+  figures_dir: "data/figures"   # where input figure-panel images live
+  template_dir: "template"      # where ventral.csv / dorsal.csv + calibration JSON are written
+  name_list: "src/leechtemplate/cell_names.yaml"
+
+annotation:
+  # Cells within this distance of the midline (in canonical A-P-length units)
+  # are auto-classified as midline ('M'). The user can always override per cell.
+  midline_tol: 0.02
+  # Default confidence applied to a freshly clicked cell.
+  default_confidence: "high"
+  # Allowed controlled values (schema is enforced on save).
+  sides: ["L", "R", "M"]
+  aspects: ["ventral", "dorsal"]
+  confidences: ["high", "medium", "low"]
