@@ -51,7 +51,7 @@ def build_annotate_panel(ctx) -> "object":
     leech_spin = SpinBox(label="leech #", value=0, min=0, max=99)
     food_present = CheckBox(label="food present", value=True)
     detect_btn = PushButton(text="Auto-detect arena")
-    save_btn = PushButton(text="Save & next")
+    save_btn = PushButton(text="Save & next  [Space]")
     back_btn = PushButton(text="◀ Back (previous frame)")
     skip_btn = PushButton(text="Skip frame (no save) ▶")
     add_spin = SpinBox(label="add N frames", value=10, min=1, max=500)
@@ -159,8 +159,13 @@ def build_annotate_panel(ctx) -> "object":
         try:
             if arena is not None:
                 set_arena(circle_to_corners(*arena))
+            # reflect the saved food state exactly (override any carried-over point)
             if food is not None:
                 food_layer.data = np.array([[food[1], food[0]]])  # (row, col) = (y, x)
+                food_present.value = True
+            else:
+                food_layer.data = np.empty((0, 2))
+                food_present.value = False
             pts, roles, idxs = [], [], []
             for idx in sorted(leeches):
                 for role, (x, y) in leeches[idx].items():
@@ -185,9 +190,10 @@ def build_annotate_panel(ctx) -> "object":
             return
         frame_idx = queue[state["pos"]]
         ctx.show_frame(frame_idx)
-        # reset layers (guarded so clearing doesn't trip the auto-advance handler)
+        # reset per-frame leech points (guarded so clearing doesn't trip auto-advance).
+        # Food is carried over like the arena (it's ~static); load_existing overrides it
+        # for a revisited annotated frame.
         state["loading"] = True
-        food_layer.data = np.empty((0, 2))
         leech_layer.data = np.empty((0, 2))
         state["loading"] = False
         state["leech_count"] = 0
@@ -280,6 +286,14 @@ def build_annotate_panel(ctx) -> "object":
     skip_btn.changed.connect(skip)
     back_btn.changed.connect(back)
     add_btn.changed.connect(add_frames)
+
+    # Keyboard: Space = Save & next (overwrite napari's default hold-to-pan binding).
+    try:
+        @viewer.bind_key("Space", overwrite=True)
+        def _space_save(_v):
+            save_next()
+    except Exception as exc:  # noqa: BLE001 — e.g. a stub viewer in tests
+        ctx.status(f"could not bind Space key: {exc}")
 
     # Auto-build the queue (and load any existing annotations) whenever a clip opens.
     ctx.on_video_loaded(build_queue)
