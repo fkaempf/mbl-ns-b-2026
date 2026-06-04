@@ -26,11 +26,26 @@ class AppContext:
     image_layer: object         # napari.layers.Image (main canvas)
     _status: object             # magicgui Label
     _listeners: list = field(default_factory=list)  # callables(path) run after a load
+    _frame_listeners: list = field(default_factory=list)  # callables(idx) on frame change
+    _frame_setter: object = None  # callable(idx) wired to move the session frame slider
+
+    def set_frame(self, idx: int) -> None:
+        """Move the session frame slider (and thus the display) to `idx`. Used by
+        playback so the slider stays in sync; falls back to show_frame if unwired."""
+        if self._frame_setter is not None:
+            self._frame_setter(int(idx))
+        else:
+            self.show_frame(int(idx))
 
     def on_video_loaded(self, fn) -> None:
         """Register a callback fired (with the new path) whenever a video is loaded.
         Panels use this to auto-react when the user opens/switches a clip."""
         self._listeners.append(fn)
+
+    def on_frame_changed(self, fn) -> None:
+        """Register a callback fired (with the frame index) whenever the displayed
+        frame changes. Panels use this to sync per-frame overlays while scrubbing."""
+        self._frame_listeners.append(fn)
 
     def load_video(self, path) -> object:
         """Open a VideoReader, record state, show frame 0, notify listeners, return it."""
@@ -51,11 +66,17 @@ class AppContext:
         return reader
 
     def show_frame(self, idx: int) -> None:
-        """Display frame `idx` from the loaded reader on the image layer."""
+        """Display frame `idx` from the loaded reader on the image layer, notifying
+        frame listeners so per-frame overlays (e.g. tracks) stay in sync."""
         reader = self.state.get("reader")
         if reader is None:
             return
         self.image_layer.data = reader.frame(int(idx))
+        for fn in self._frame_listeners:
+            try:
+                fn(int(idx))
+            except Exception as exc:  # noqa: BLE001 — a listener must not block display
+                self.status(f"frame listener error: {exc}")
 
     def set_image(self, img) -> None:
         """Set the image layer data to an arbitrary RGB uint8 array (e.g. a composite)."""
@@ -114,6 +135,11 @@ def build_app(config, config_path, video=None):
 
     frame_slider.changed.connect(_on_frame_changed)
 
+    def _set_frame(idx):
+        frame_slider.value = max(frame_slider.min, min(int(idx), frame_slider.max))
+
+    ctx._frame_setter = _set_frame
+
     def _open(path):
         reader = ctx.load_video(path)
         frame_slider.max = max(0, reader.n_frames - 1)
@@ -134,6 +160,7 @@ def build_app(config, config_path, video=None):
     from .compress_panel import build_compress_panel
     from .split_panel import build_split_panel
     from .annotate_panel import build_annotate_panel
+    from .track_panel import build_track_panel
 
     tabs = QTabWidget()
 
@@ -148,6 +175,7 @@ def build_app(config, config_path, video=None):
     _add_tab(build_compress_panel, "Compress")
     _add_tab(build_split_panel, "Split")
     _add_tab(build_annotate_panel, "Annotate")
+    _add_tab(build_track_panel, "Track")
 
     viewer.window.add_dock_widget(_scrollable(session.native), area="right", name="session")
     viewer.window.add_dock_widget(tabs, area="right", name="tools")

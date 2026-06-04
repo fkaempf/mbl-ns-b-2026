@@ -23,7 +23,9 @@ from .sampling import planned_frames, unannotated
 from .store import annotated_frames, append_rows
 from .video import VideoReader
 
-ROLES = ["anterior", "posterior", "middle"]
+ROLES_3 = ["anterior", "posterior", "middle"]   # full body: head, tail, mid
+ROLES_2 = ["anterior", "posterior"]             # ends only
+ROLES = ROLES_3                                 # default / back-compat
 
 
 def advance_role(role, leech_idx, roles=ROLES):

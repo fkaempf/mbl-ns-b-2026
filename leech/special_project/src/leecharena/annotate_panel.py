@@ -11,9 +11,16 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from .annotate import ROLES, _build_rows, _xy_from_rowcol, advance_role, annotation_from_rows
+from .annotate import (
+    ROLES_2,
+    ROLES_3,
+    _build_rows,
+    _xy_from_rowcol,
+    advance_role,
+    annotation_from_rows,
+)
 from .arena import circle_to_corners, corners_to_circle, detect_circle
-from .sampling import more_frames, planned_frames
+from .sampling import even_frames, more_frames, planned_frames
 from .store import annotated_frames, load as load_store, upsert_frame
 
 
@@ -36,24 +43,33 @@ def build_annotate_panel(ctx) -> "object":
         face_color="red", size=10,
         text={"string": "{leech_idx}:{role}", "color": "white", "size": 8},
     )
-    leech_layer.feature_defaults["role"] = ROLES[0]
+    leech_layer.feature_defaults["role"] = ROLES_3[0]
     leech_layer.feature_defaults["leech_idx"] = 0
 
     # --- closure state -------------------------------------------------------
     # loading=True suppresses the auto-advance handler while we repopulate layers.
-    state = {"pos": 0, "queue": [], "leech_count": 0, "loading": False}
+    state = {"pos": 0, "queue": [], "leech_count": 0, "loading": False, "shown_frame": None}
+
+    def active_roles():
+        return ROLES_3 if node_mode.value.startswith("ant/post/mid") else ROLES_2
 
     # --- widgets -------------------------------------------------------------
     progress = Label(value="")
+    node_mode = ComboBox(label="nodes", choices=["ant/post/mid", "ant/post"],
+                         value="ant/post/mid")
+    sample_mode = ComboBox(label="sampling", choices=["random (n_sample)", "even interval"],
+                           value="random (n_sample)")
+    interval_spin = SpinBox(label="even interval (s)", value=10, min=1, max=600)
     start_btn = PushButton(text="Start / reload queue")
     target = Label(value="")
-    role_combo = ComboBox(label="leech role", choices=ROLES, value=ROLES[0])
+    role_combo = ComboBox(label="leech role", choices=ROLES_3, value=ROLES_3[0])
     leech_spin = SpinBox(label="leech #", value=0, min=0, max=99)
     food_present = CheckBox(label="food present", value=True)
+    auto_arena = CheckBox(label="auto-detect arena each frame", value=True)
     detect_btn = PushButton(text="Auto-detect arena")
     save_btn = PushButton(text="Save & next  [Space]")
     back_btn = PushButton(text="◀ Back (previous frame)")
-    skip_btn = PushButton(text="Skip frame (no save) ▶")
+    skip_btn = PushButton(text="Next ▶")
     add_spin = SpinBox(label="add N frames", value=10, min=1, max=500)
     add_btn = PushButton(text="➕ Add more frames to pool")
 
@@ -78,10 +94,17 @@ def build_annotate_panel(ctx) -> "object":
     def update_target(*_):
         target.value = f"Next click → {role_combo.value} (leech {int(leech_spin.value)})"
 
+    def on_node_mode(*_):
+        roles = active_roles()
+        role_combo.choices = roles
+        role_combo.value = roles[0]
+        update_target()
+
     role_combo.changed.connect(push_defaults)
     leech_spin.changed.connect(push_defaults)
     role_combo.changed.connect(update_target)
     leech_spin.changed.connect(update_target)
+    node_mode.changed.connect(on_node_mode)
 
     def on_leech_data(*_):
         """Stamp each newly placed point with the current target role/leech, then
@@ -102,7 +125,7 @@ def build_annotate_panel(ctx) -> "object":
             for i in range(state["leech_count"], n):
                 feats.loc[i, "role"] = role_combo.value
                 feats.loc[i, "leech_idx"] = int(leech_spin.value)
-                nr, nl = advance_role(role_combo.value, int(leech_spin.value))
+                nr, nl = advance_role(role_combo.value, int(leech_spin.value), roles=active_roles())
                 role_combo.value = nr
                 leech_spin.value = nl
             leech_layer.features = feats
@@ -133,7 +156,11 @@ def build_annotate_panel(ctx) -> "object":
         if reader is None or video_id is None:
             ctx.status("Load a video first.")
             return
-        planned = planned_frames(reader.n_frames, config.n_sample, config.seed)
+        if sample_mode.value.startswith("even"):
+            step = max(1, round(int(interval_spin.value) * (reader.fps or 30.0)))
+            planned = even_frames(reader.n_frames, step)   # 0, step, 2*step … to end
+        else:
+            planned = planned_frames(reader.n_frames, config.n_sample, config.seed)
         done = annotated_frames(config.annotations_path, video_id)
         state["queue"] = planned  # keep all planned frames so Back can revisit any
         state["pos"] = next((i for i, f in enumerate(planned) if f not in done), 0)
@@ -176,17 +203,35 @@ def build_annotate_panel(ctx) -> "object":
             state["leech_count"] = len(pts)
         finally:
             state["loading"] = False
+        # On return to an annotated frame, the next leech starts one above the highest
+        # existing id so a newly added animal doesn't collide with an existing one.
+        if idxs:
+            leech_spin.value = max(idxs) + 1
+            role_combo.value = active_roles()[0]
+            push_defaults()
+            update_target()
         return True
 
     def load_current():
         queue = state["queue"]
         n_q = len(queue)
+        # Auto-save the frame we're leaving (its annotation is still on the layers),
+        # so any frame change persists work without needing the Save button.
+        prev = state.get("shown_frame")
+        target = queue[state["pos"]] if state["pos"] < n_q else None
+        if prev is not None and prev != target and _has_leeches():
+            try:
+                _persist_frame(prev)
+            except Exception as exc:  # noqa: BLE001
+                ctx.status(f"Auto-save failed: {exc}")
         if n_q == 0:
             progress.value = "Load a clip and Start the queue."
+            state["shown_frame"] = None
             return
         if state["pos"] >= n_q:
             progress.value = f"All {n_q} sampled frames done — use ◀ Back to revisit."
             ctx.status("Queue complete.")
+            state["shown_frame"] = None
             return
         frame_idx = queue[state["pos"]]
         ctx.show_frame(frame_idx)
@@ -198,14 +243,17 @@ def build_annotate_panel(ctx) -> "object":
         state["loading"] = False
         state["leech_count"] = 0
         leech_spin.value = 0
-        role_combo.value = ROLES[0]
+        role_combo.value = active_roles()[0]
         push_defaults()
         update_target()
         had = load_existing(frame_idx)
-        # Arena is static across a single-dish clip: a revisited frame restores its
-        # saved arena; otherwise keep the carried-over ellipse, detecting only if none.
-        if not had and len(arena_layer.data) == 0:
+        # A revisited annotated frame restores its saved arena. Otherwise: if
+        # "auto-detect arena each frame" is on, re-detect every frame (handles a
+        # drifting dish); if off, carry the previous ellipse over, detecting only
+        # when there isn't one yet.
+        if not had and (auto_arena.value or len(arena_layer.data) == 0):
             auto_detect()
+        state["shown_frame"] = frame_idx
         mark = "  ✓ annotated" if had else ""
         progress.value = f"frame {frame_idx}  ({state['pos'] + 1} / {n_q}){mark}"
 
@@ -221,29 +269,40 @@ def build_annotate_panel(ctx) -> "object":
             leeches.setdefault(idx, {})[role] = (float(xy[i, 0]), float(xy[i, 1]))
         return leeches
 
+    def _persist_frame(frame_idx) -> "int | None":
+        """Write the current layers' annotation for frame_idx (upsert). Returns row
+        count, or None if no video is loaded."""
+        reader = ctx.state.get("reader")
+        video_id = _video_id()
+        if reader is None or video_id is None:
+            return None
+        arena = current_arena()
+        food = None
+        if food_present.value and len(food_layer.data) > 0:
+            fxy = _xy_from_rowcol(food_layer.data)[0]
+            food = (float(fxy[0]), float(fxy[1]))
+        rows = _build_rows(video_id, frame_idx, reader.time_s(frame_idx),
+                           arena, food, collect_leeches())
+        # upsert (not append) so re-saving a revisited frame replaces its rows
+        upsert_frame(config.annotations_path, video_id, frame_idx, rows)
+        return len(rows)
+
+    def _has_leeches() -> bool:
+        return len(leech_layer.data) > 0
+
     def save_next(*_):
         try:
-            queue = state["queue"]
-            if state["pos"] >= len(queue):
+            if state["pos"] >= len(state["queue"]):
                 ctx.status("Queue empty — nothing to save.")
                 return
-            reader = ctx.state.get("reader")
-            video_id = _video_id()
-            if reader is None or video_id is None:
+            frame_idx = state["queue"][state["pos"]]
+            n = _persist_frame(frame_idx)
+            if n is None:
                 ctx.status("Load a video first.")
                 return
-            frame_idx = queue[state["pos"]]
-            arena = current_arena()
-            food = None
-            if food_present.value and len(food_layer.data) > 0:
-                fxy = _xy_from_rowcol(food_layer.data)[0]
-                food = (float(fxy[0]), float(fxy[1]))
-            rows = _build_rows(video_id, frame_idx, reader.time_s(frame_idx),
-                               arena, food, collect_leeches())
-            # upsert (not append) so re-saving a revisited frame replaces its rows
-            upsert_frame(config.annotations_path, video_id, frame_idx, rows)
-            ctx.status(f"Saved frame {frame_idx} ({len(rows)} row(s)).")
+            ctx.status(f"Saved frame {frame_idx} ({n} row(s)).")
             state["pos"] += 1
+            state["shown_frame"] = None      # already saved; skip the auto-save in load_current
             load_current()
         except Exception as exc:
             ctx.status(f"Save failed: {exc}")
@@ -287,13 +346,35 @@ def build_annotate_panel(ctx) -> "object":
     back_btn.changed.connect(back)
     add_btn.changed.connect(add_frames)
 
-    # Keyboard: Space = Save & next (overwrite napari's default hold-to-pan binding).
+    # Keyboard: Space = Save & next. An application-level event filter catches the
+    # key before napari's canvas (whose hold-to-pan otherwise swallows Space) and
+    # regardless of which dock widget has focus — the canvas-only bind_key proved
+    # unreliable. We ignore Space while a text/number field is being edited.
     try:
-        @viewer.bind_key("Space", overwrite=True)
-        def _space_save(_v):
-            save_next()
-    except Exception as exc:  # noqa: BLE001 — e.g. a stub viewer in tests
-        ctx.status(f"could not bind Space key: {exc}")
+        from qtpy.QtCore import QEvent, QObject, Qt
+        from qtpy.QtWidgets import QApplication, QLineEdit
+
+        class _SpaceFilter(QObject):
+            def eventFilter(self, obj, event):
+                if (event.type() == QEvent.KeyPress
+                        and event.key() == Qt.Key_Space
+                        and not event.isAutoRepeat()):
+                    fw = QApplication.focusWidget()
+                    # Only ignore Space while actively TYPING in a text field. A
+                    # spinbox that merely holds focus (e.g. after auto-advance bumps
+                    # the leech #) reports the spinbox itself, NOT its inner QLineEdit,
+                    # so Space still advances — fixing "Space worked after anterior but
+                    # not after posterior".
+                    if not isinstance(fw, QLineEdit):
+                        save_next()
+                        return True
+                return False
+
+        filt = _SpaceFilter()
+        QApplication.instance().installEventFilter(filt)
+        state["space_filter"] = filt          # keep a reference so it isn't GC'd
+    except Exception as exc:  # noqa: BLE001 — e.g. no QApplication in a stub test
+        progress.value = f"could not bind Space: {exc}"
 
     # Auto-build the queue (and load any existing annotations) whenever a clip opens.
     ctx.on_video_loaded(build_queue)
@@ -301,10 +382,10 @@ def build_annotate_panel(ctx) -> "object":
     update_target()
 
     return Container(widgets=[
-        start_btn,
+        node_mode, sample_mode, interval_spin, start_btn,
         progress,
-        Label(value="— arena —"), detect_btn,
-        Label(value="— leech (click; role auto-advances ant→post→mid→next leech) —"),
+        Label(value="— arena —"), auto_arena, detect_btn,
+        Label(value="— leech (click; role auto-advances; → next leech) —"),
         target, role_combo, leech_spin,
         Label(value="— food (select 'food' layer, then click) —"), food_present,
         save_btn,

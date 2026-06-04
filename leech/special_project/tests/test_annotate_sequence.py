@@ -1,4 +1,14 @@
-from leecharena.annotate import ROLES, advance_role
+from leecharena.annotate import ROLES, ROLES_2, ROLES_3, advance_role
+
+
+def test_two_node_mode_cycles_anterior_posterior_only():
+    assert advance_role("anterior", 0, roles=ROLES_2) == ("posterior", 0)
+    assert advance_role("posterior", 0, roles=ROLES_2) == ("anterior", 1)
+    assert "middle" not in ROLES_2
+
+
+def test_three_node_mode_is_default_roles():
+    assert ROLES == ROLES_3 == ["anterior", "posterior", "middle"]
 
 
 def test_advance_cycles_through_roles():

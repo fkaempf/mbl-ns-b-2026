@@ -31,6 +31,17 @@ def unannotated(planned: list[int], annotated: set[int]) -> list[int]:
     return [f for f in planned if f not in annotated]
 
 
+def even_frames(n_total: int, step: int) -> list[int]:
+    """Evenly-spaced frame indices 0, step, 2*step, ... up to the video end.
+
+    `step` is a frame interval (e.g. round(interval_seconds * fps)). A step < 1 is
+    clamped so the result is just frame 0 (no crash)."""
+    if n_total <= 0:
+        return []
+    step = max(1, int(step))
+    return list(range(0, int(n_total), step))
+
+
 def more_frames(n_total: int, exclude, k: int, seed: int) -> list[int]:
     """Up to k additional frame indices from [0, n_total), none of them in `exclude`.
 

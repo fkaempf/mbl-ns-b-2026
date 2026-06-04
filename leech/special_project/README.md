@@ -4,10 +4,38 @@ Two independent hand-annotation tools for the leech (*Helobdella austinensis*) w
 each its own package under `src/`:
 
 - **`leechtemplate`** — build a canonical 2D template of identified neurons (this file, below).
-- **`leecharena`** — annotate leech orientation in a radial arena from video
-  (see **Arena orientation tool** at the end).
+- **`leecharena`** — annotate leech orientation in a radial arena from video, and
+  auto-track leech positions (see **Arena orientation tool** at the end).
 
 `uv run pytest` runs both suites.
+
+---
+
+# Install on another computer
+
+The project is fully reproducible via [uv](https://docs.astral.sh/uv/) (a `pyproject.toml`
++ `uv.lock` pin every dependency and the Python version). On a fresh machine:
+
+```bash
+# 1. install uv (macOS/Linux):
+curl -LsSf https://astral.sh/uv/install.sh | sh        # Windows: see uv docs
+
+# 2. get the code and enter this folder:
+git clone https://github.com/fkaempf/mbl-ns-b-2026.git
+cd mbl-ns-b-2026/leech/special_project
+
+# 3. create the environment (fetches Python 3.11 + napari/Qt/OpenCV/ffmpeg, all pinned):
+uv sync
+
+# 4. run the app:
+uv run leech-arena                               # then pick a video in the window
+uv run leech-arena --video path/to/clip.mp4
+uv run pytest                                    # optional: run the test suite
+```
+
+No system ffmpeg or OpenCV install is needed — they come via `imageio-ffmpeg` and
+`opencv-python-headless` inside the uv environment. If `uv run` ever resolves the wrong
+Python, call the venv directly: `.venv/bin/python -m leecharena.app`.
 
 ---
 
@@ -87,16 +115,22 @@ hand-annotating a randomized sample of frames from single-dish MP4 clips. See
 
 Config: `arena_config.yaml`.
 
-## Unified app (recommended): one window, three tabs
+## Unified app (recommended): one window, four tabs
 
 The whole pipeline is also available as a single napari app that shares **one
-viewer + one loaded video + one frame slider** across three tabs:
+viewer + one loaded video + one frame slider** across four tabs:
 
 - **Compress** — re-encode the loaded video with H.264 (CRF / preset / scale).
 - **Split** — build a mean/median composite, place one ellipse per dish (Hough
   auto-detect or by hand), then save ROIs to config or split into clips.
-- **Annotate** — orientation annotation on the sampled frames (arena ellipse,
-  food, per-leech anterior/posterior/middle points), saved to the annotations CSV.
+- **Annotate** — orientation annotation on sampled frames (arena ellipse, food,
+  per-leech points). Choose `ant/post/mid` or `ant/post` nodes; random or even-interval
+  (by fps) sampling; click-to-advance roles; **Space = save & next**; per-frame arena
+  auto-detect. Saved to the annotations CSV.
+- **Track** — automatic leech-position tracking: seed each leech on a frame, tune
+  params, **Verify 10 s**, **Predict full video** (background), then scrub/▶Play and
+  drag to correct. Two body-end nodes per leech; a central food deadzone; the dish
+  is re-detected periodically to follow drift. Writes `annotations/tracks_<video>.csv`.
 
 ```bash
 uv run leech-arena --video data/videos/raw.mp4
