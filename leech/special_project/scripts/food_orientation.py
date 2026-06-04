@@ -146,11 +146,13 @@ def main(argv=None) -> None:
         print("No leech annotations yet.")
         return
 
-    out_csv = cfg.annotations_path.with_name("food_orientation.csv")
+    out_dir = cfg.annotations_path.resolve().parent.parent / "food_orientation"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_csv = out_dir / "food_orientation.csv"
     df.to_csv(out_csv, index=False)
     print(f"wrote {out_csv}")
     _summary(df, args.straight_deg)
-    _plots(df, cfg.annotations_path.with_name("food_orientation.png"), args.straight_deg)
+    _plots(df, out_dir / "food_orientation.png", args.straight_deg)
     if not args.no_show:
         plt.show()
 

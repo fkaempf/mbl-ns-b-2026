@@ -14,3 +14,6 @@ template/*_calibration.json
 # arena tool data products
 clips/
 annotations/
+
+# DL outputs (models, overlay videos, prediction CSVs) — large, regenerable
+DL/
