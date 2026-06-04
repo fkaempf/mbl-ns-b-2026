@@ -14,17 +14,22 @@ each its own package under `src/`:
 # Install on another computer
 
 The project is fully reproducible via [uv](https://docs.astral.sh/uv/) (a `pyproject.toml`
-+ `uv.lock` pin every dependency and the Python version). On a fresh machine:
++ `uv.lock` pin every dependency and the Python version). You only need **git** and **uv**;
+Python, napari/Qt, OpenCV and ffmpeg are all installed by `uv sync` (no system ffmpeg or
+OpenCV needed — they come via `imageio-ffmpeg` and `opencv-python-headless`).
+
+## macOS / Linux
 
 ```bash
-# 1. install uv (macOS/Linux):
-curl -LsSf https://astral.sh/uv/install.sh | sh        # Windows: see uv docs
+# 1. install uv:
+curl -LsSf https://astral.sh/uv/install.sh | sh
+#    (git is preinstalled on macOS via `xcode-select --install`; Linux: `sudo apt install git`)
 
 # 2. get the code and enter this folder:
 git clone https://github.com/fkaempf/mbl-ns-b-2026.git
 cd mbl-ns-b-2026/leech/special_project
 
-# 3. create the environment (fetches Python 3.11 + napari/Qt/OpenCV/ffmpeg, all pinned):
+# 3. create the environment (fetches Python 3.11 + all deps, pinned):
 uv sync
 
 # 4. run the app:
@@ -33,9 +38,43 @@ uv run leech-arena --video path/to/clip.mp4
 uv run pytest                                    # optional: run the test suite
 ```
 
-No system ffmpeg or OpenCV install is needed — they come via `imageio-ffmpeg` and
-`opencv-python-headless` inside the uv environment. If `uv run` ever resolves the wrong
-Python, call the venv directly: `.venv/bin/python -m leecharena.app`.
+If `uv run` ever resolves the wrong Python, call the venv directly:
+`.venv/bin/python -m leecharena.app`.
+
+## Windows (step by step)
+
+Use **PowerShell** (search Start menu → "PowerShell"). Windows 10/11 already include
+`winget` and `curl`.
+
+```powershell
+# 1. install git and uv:
+winget install --id Git.Git -e
+winget install --id astral-sh.uv -e
+#    (if winget is unavailable, install uv with:
+#     powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex" )
+
+# 2. CLOSE and reopen PowerShell so git and uv are on PATH, then verify:
+git --version
+uv --version
+
+# 3. get the code and enter this folder:
+git clone https://github.com/fkaempf/mbl-ns-b-2026.git
+cd mbl-ns-b-2026\leech\special_project
+
+# 4. create the environment (downloads Python 3.11 + napari/Qt/OpenCV/ffmpeg, pinned):
+uv sync
+
+# 5. run the app:
+uv run leech-arena                               # then pick a video in the window
+uv run leech-arena --video path\to\clip.mp4
+uv run pytest                                    # optional: run the test suite
+```
+
+Notes for Windows:
+- Use backslashes in paths (`path\to\clip.mp4`), or quote paths that contain spaces.
+- napari opens a normal desktop window; if it fails to start, update your GPU drivers
+  (napari needs OpenGL). On a remote/headless box use a real display, not RDP software GL.
+- If `uv run` resolves the wrong Python, run `.venv\Scripts\python -m leecharena.app`.
 
 ---
 
