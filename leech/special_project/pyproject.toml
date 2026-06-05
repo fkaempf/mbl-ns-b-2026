@@ -13,6 +13,7 @@ dependencies = [
     "magicgui>=0.8",
     "opencv-python-headless>=4.8",
     "imageio-ffmpeg>=0.4",
+    "suite2p[gui]",
 ]
 
 [project.optional-dependencies]
@@ -37,3 +38,6 @@ packages = ["src/leechtemplate", "src/leecharena"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.uv.sources]
+suite2p = { git = "https://github.com/Mouseland/suite2p" }

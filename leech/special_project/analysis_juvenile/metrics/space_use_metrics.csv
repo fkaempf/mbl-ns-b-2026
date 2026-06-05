@@ -1,0 +1,9 @@
+entity,video,treatment,leech,low_conf,n_frames,area_grid_cm2,hull_area_cm2,pct_arena_grid,pct_arena_hull,range_x_cm,range_y_cm
+Video1_dish0_L0,Video1_dish0,Dopamine,L0,True,63005,0.25,0.0957,2.598,0.995,0.3526,0.3654
+Video1_dish0_L1,Video1_dish0,Dopamine,L1,True,63005,0.0625,0.0143,0.65,0.149,0.1567,0.139
+Video1_dish1_L0,Video1_dish1,Dopamine+Food,L0,True,63005,0.375,0.0801,3.898,0.833,0.6045,0.2575
+Video1_dish1_L1,Video1_dish1,Dopamine+Food,L1,True,63005,0.375,0.0745,3.898,0.775,0.41,0.3566
+Video2_dish0_L0,Video2_dish0,Food,L0,False,64755,0.1875,0.0201,1.949,0.209,0.2287,0.1308
+Video2_dish0_L1,Video2_dish0,Food,L1,False,64755,0.1875,0.009,1.949,0.093,0.1006,0.139
+Video2_dish1_L0,Video2_dish1,Veh+Food,L0,True,64755,0.8125,0.45,8.445,4.677,0.7693,1.5901
+Video2_dish1_L1,Video2_dish1,Veh+Food,L1,True,64755,1.5,1.0501,15.591,10.915,1.0189,1.4083

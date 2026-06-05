@@ -17,3 +17,12 @@ annotations/
 
 # DL outputs (models, overlay videos, prediction CSVs) — large, regenerable
 DL/
+
+# calcium analysis: large / regenerable data products (keep code, report, annotations)
+analysis/calcium/regions/**/results/
+analysis/calcium/regions/**/results_residual/
+analysis/calcium/regions/**/phase/
+analysis/calcium/regions/**/masks.npy
+analysis/calcium/regions/**/contraction/
+analysis/calcium/report/REPORT.pdf
+analysis/calcium/report/REPORT.html
