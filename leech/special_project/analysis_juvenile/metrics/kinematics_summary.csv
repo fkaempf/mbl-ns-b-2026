@@ -1,0 +1,9 @@
+entity,treatment,low_confidence,total_head_path_cm,total_tail_path_cm,mean_speed_cms,median_speed_cms,pct_time_moving,n_bouts,mean_bout_dur_s,mean_ibi_s,body_length_cm,total_head_path_BL,still_thresh_cms,smoothing
+Video1_dish0_L0,Dopamine L0,True,176.9,75.4,0.0511,0.0377,38.9,2136,0.32,0.52,0.051,3500.2,0.05,savgol w11 o2
+Video1_dish0_L1,Dopamine L1,True,219.8,36.1,0.0564,0.0378,40.1,2104,0.36,0.6,0.12,1833.5,0.05,savgol w11 o2
+Video1_dish1_L0,DA+Food L0,True,237.6,50.8,0.0587,0.0447,45.4,2321,0.35,0.55,0.103,2303.7,0.05,savgol w11 o2
+Video1_dish1_L1,DA+Food L1,True,232.8,41.9,0.0588,0.044,44.9,2304,0.36,0.54,0.078,2971.2,0.05,savgol w11 o2
+Video2_dish0_L0,Veh+NoFood L0,False,31.3,8.9,0.0076,0.0044,1.5,73,0.36,7.97,0.123,254.8,0.05,savgol w11 o2
+Video2_dish0_L1,Veh+NoFood L1,False,23.7,9.4,0.0062,0.0042,0.8,41,0.35,1.59,0.095,249.3,0.05,savgol w11 o2
+Video2_dish1_L0,Veh+Food L0,True,190.7,121.1,0.0652,0.0243,23.4,1109,0.36,1.58,0.187,1017.9,0.05,savgol w11 o2
+Video2_dish1_L1,Veh+Food L1,True,213.2,123.5,0.0709,0.0265,28.7,1382,0.38,1.18,0.135,1574.9,0.05,savgol w11 o2

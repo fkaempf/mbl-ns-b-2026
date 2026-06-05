@@ -1,9 +1,9 @@
-entity,video,treatment,leech,low_conf,n_frames,mean_radial_norm,median_radial_norm,mean_wall_dist_cm,pct_time_outer_annulus,pct_time_central_zone,center_crossings
-Video1_dish0_L0,Video1_dish0,Dopamine,0,True,63005,0.588,0.6055,0.721,0.0,8.55,70
-Video1_dish0_L1,Video1_dish0,Dopamine,1,True,63005,0.6268,0.6244,0.653,0.0,0.0,0
-Video1_dish1_L0,Video1_dish1,Dopamine+Food,0,True,63005,0.0898,0.0912,1.5928,0.0,100.0,0
-Video1_dish1_L1,Video1_dish1,Dopamine+Food,1,True,63005,0.2043,0.2039,1.3925,0.0,100.0,0
-Video2_dish0_L0,Video2_dish0,Food,0,False,64755,0.0443,0.0364,1.6725,0.0,100.0,0
-Video2_dish0_L1,Video2_dish0,Food,1,False,64755,0.16,0.1617,1.47,0.0,100.0,0
-Video2_dish1_L0,Video2_dish1,Veh+Food,0,True,64755,0.4231,0.2909,1.0096,3.9,53.45,35
-Video2_dish1_L1,Video2_dish1,Veh+Food,1,True,64755,0.3142,0.2679,1.2001,3.52,88.93,34
+entity,treatment,dish,track,n_frames,low_conf,mean_radial_cm,median_radial_cm,mean_r_norm,mean_wall_dist_cm,pct_time_outer_annulus,pct_time_central_zone,center_crossings,body_length_cm
+Video1_dish0_L0,Dopamine L0,Video1_dish0.mp4,0,63005,True,1.029,1.06,0.588,0.721,0.0,8.5,70,0.051
+Video1_dish0_L1,Dopamine L1,Video1_dish0.mp4,1,63005,True,1.097,1.093,0.627,0.653,0.0,0.0,0,0.12
+Video1_dish1_L0,DA+Food L0,Video1_dish1.mp4,0,63005,True,0.157,0.16,0.09,1.593,0.0,100.0,0,0.103
+Video1_dish1_L1,DA+Food L1,Video1_dish1.mp4,1,63005,True,0.357,0.357,0.204,1.393,0.0,100.0,0,0.078
+Video2_dish0_L0,Veh+NoFood L0,Video2_dish0.mp4,0,64755,False,0.077,0.064,0.044,1.673,0.0,100.0,0,0.123
+Video2_dish0_L1,Veh+NoFood L1,Video2_dish0.mp4,1,64755,False,0.28,0.283,0.16,1.47,0.0,100.0,0,0.095
+Video2_dish1_L0,Veh+Food L0,Video2_dish1.mp4,0,64755,True,0.74,0.509,0.423,1.01,3.9,53.4,35,0.187
+Video2_dish1_L1,Veh+Food L1,Video2_dish1.mp4,1,64755,True,0.55,0.469,0.314,1.2,3.5,88.9,34,0.135
