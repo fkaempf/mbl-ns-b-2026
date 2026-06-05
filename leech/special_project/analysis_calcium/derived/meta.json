@@ -1,0 +1,20 @@
+{
+  "fs": 2.882,
+  "n_cells": 180,
+  "n_frames": 692,
+  "method": "correlation_blob_watershed",
+  "neuropil_coef": 0.7,
+  "f0_method": "rolling 10th percentile, window 173 frames (~60 s)",
+  "registration_used": false,
+  "source_file": "/Users/fkampf/Documents/mbl/code/mbl-ns-b-2026/leech/special_project/data/calcium/2026-06-04/helobdella_LeechNo2_elavgcamp6m-17.tif",
+  "n_cells_s2p": 24,
+  "detection_params": {
+    "min_distance": 5,
+    "det_smooth_sigma": 1.0,
+    "soma_radius_px": 6,
+    "area_min_px2": 25,
+    "area_max_px2": 500,
+    "neuropil_annulus_dilate_px": 8
+  },
+  "label_offset_note": "roi_masks label = cell_id + 1 (0 = background)"
+}

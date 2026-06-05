@@ -1,0 +1,23 @@
+{
+  "dom_freq_hz_used": 0.37066,
+  "dom_freq_source": "s3:dominant_freq_hz",
+  "dom_period_s": 2.698,
+  "frac_tissue_pixels_rhythmic": 0.9338,
+  "tissue_fraction_of_fov": 0.1321,
+  "phase_circular_std_rad": 1.1296,
+  "phase_resultant_R": 0.5283,
+  "phase_gradient_detected": false,
+  "phase_gradient_description": "phase vs long-axis position: slope=0.0001 rad/px, R2=0.000, total phase change across band=0.03 rad (1 deg over 369 ds-px)",
+  "phase_gradient_total_rad_across_band": 0.0261,
+  "phase_gradient_r2": 0.0,
+  "n_regions": 6,
+  "mean_interregion_corr": 0.2057,
+  "min_interregion_corr": -0.4994,
+  "max_interregion_corr": 0.8502,
+  "peak_frame": 539,
+  "trough_frame": 683,
+  "fs_hz": 2.882,
+  "n_frames": 692,
+  "downsample_factor": 2,
+  "notes": "10x low-mag preliminary line; signal characterized at GANGLION level, ROIs treated as active patches not single neurons. Pixelwise FFT done on 2x-downsampled (350x350) movie for speed. Tissue mask from std-over-time 80th pctile + morphology, largest components. Motion ruled out in Stage 1 (drift=0px), so peak/trough modulation is real fluorescence, not registration artifact. No single-neuron claims."
+}

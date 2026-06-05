@@ -1,0 +1,11 @@
+{
+  "n_cells": 24,
+  "method": "suite2p",
+  "reg_xoff_absmax": 0.0,
+  "reg_yoff_absmax": 0.0,
+  "dff_p99": 0.7311978340148926,
+  "dff_max": 6.828684329986572,
+  "median_peak_dff": 0.729289174079895,
+  "fraction_active_dff_gt_0.1": 1.0,
+  "median_radius_px": 5.699791156983544
+}

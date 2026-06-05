@@ -1,0 +1,45 @@
+{
+  "fs": 2.882,
+  "duration_s": 239.764,
+  "n_frames": 692,
+  "tissue_mask_px": 10788,
+  "ganglion_mean_dff": 0.0206,
+  "ganglion_mean_dff_peak": 0.0759,
+  "dominant_freq_hz": 0.37151,
+  "dominant_period_s": 2.6917,
+  "peak_prominence_ratio": 229.84,
+  "nyquist_hz": 1.441,
+  "near_nyquist": false,
+  "freq_stable": true,
+  "spectrogram_peakfreq_std_hz": 0.01042,
+  "median_interpeak_s": 2.7759,
+  "interpeak_cv": 0.0773,
+  "n_cycles_detected": 88,
+  "autocorr_first_peak_lag_s": 2.7759,
+  "autocorr_first_peak_height": 0.8356,
+  "traveling_wave": false,
+  "regional": [
+    {
+      "region": 0,
+      "n_px": 3596,
+      "dom_freq_hz": 0.37151,
+      "phase_lag_ms_vs_region0": 0.0,
+      "xcorr_peak": 1.0
+    },
+    {
+      "region": 1,
+      "n_px": 3596,
+      "dom_freq_hz": 0.37151,
+      "phase_lag_ms_vs_region0": 69.16,
+      "xcorr_peak": 0.913
+    },
+    {
+      "region": 2,
+      "n_px": 3596,
+      "dom_freq_hz": 0.37151,
+      "phase_lag_ms_vs_region0": 72.72,
+      "xcorr_peak": 0.923
+    }
+  ],
+  "notes": "10x low-mag preliminary elav-GCaMP6m line; signal is ganglion/regional, NOT single neurons. Recording annotated 'after dopamine pharyngals' but NO pre-dopamine baseline here, so no causal claim. Nyquist=1.441 Hz. Dominant peak is well below Nyquist; aliasing unlikely. Regions are essentially synchronous (no significant phase gradient)."
+}

@@ -1,0 +1,22 @@
+{
+  "movie": "data/calcium/2026-06-04/helobdella_LeechNo2_elavgcamp6m-17.tif",
+  "fs": 2.882,
+  "nframes": 692,
+  "duration_s": 240.138,
+  "frame_dt_s": 0.34702,
+  "bleach_pct": 0.5051,
+  "bleach_fit_ok": true,
+  "rigid_drift_px_max": 0.0,
+  "rigid_drift_px_mean": 0.0,
+  "rigid_drift_px_p95": 0.0,
+  "nonrigid_drift_px_max": 0.0,
+  "nonrigid_interblock_residual_px_max": 0.0,
+  "framecorr_mean": 0.5655,
+  "framecorr_min": 0.5049,
+  "global_max_pixel_value": 526.0,
+  "saturation_suspected": false,
+  "needs_rigid_mc": false,
+  "needs_nonrigid_mc": false,
+  "needs_detrend": false,
+  "reason": "rigid drift p95=0.00px max=0.00px (below sub-pixel threshold); non-rigid inter-block residual max=0.00px (negligible); bleaching=0.51% (no detrend needed)"
+}
