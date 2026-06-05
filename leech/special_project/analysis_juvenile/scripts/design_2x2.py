@@ -26,7 +26,7 @@ CELL = {
     "Veh+Food":   ("Veh", "Food"),
 }
 LOWCONF_CELLS = {"Dopamine", "DA+Food", "Veh+Food"}   # all but Veh+NoFood
-VEH_C, DA_C = "0.7", "#d62728"
+VEH_C, DA_C = "0.78", "#d62728"
 
 
 def base_treat(s):
@@ -57,35 +57,36 @@ PANELS = [
     (turning, "turning (deg/min)", "deg / min"),
 ]
 
+# style matched to the adult analysis_fed_leech 2x2: two groups (NoFood, Food),
+# within each a touching Veh/DA pair, no bar edges/hatching, two-level x labels,
+# full box spines, no y-axis label.
 foods = ["NoFood", "Food"]
-x = np.arange(len(foods))
-w = 0.38
+centers = np.array([0.0, 1.0])
+w = 0.4
 
 fig, axes = plt.subplots(1, 4, figsize=(18, 4.6))
 for ax, (data, title, ylab) in zip(axes, PANELS):
     for di, (drug, col) in enumerate([("Veh", VEH_C), ("DA", DA_C)]):
-        vals, hatches = [], []
+        vals = []
         for food in foods:
-            # find the base treatment matching this (drug, food) cell
             name = next(n for n, c in CELL.items() if c == (drug, food))
             vals.append(data.get(name, np.nan))
-            hatches.append("//" if name in LOWCONF_CELLS else "")
-        bars = ax.bar(x + (di - 0.5) * w, vals, w,
-                      color=col, label="Vehicle" if drug == "Veh" else "Dopamine",
-                      edgecolor="k", linewidth=0.6)
-        for b, h in zip(bars, hatches):
-            b.set_hatch(h)
-    ax.set_xticks(x)
-    ax.set_xticklabels(foods)
+        ax.bar(centers + (di - 0.5) * w, vals, w, color=col,
+               label="Vehicle" if drug == "Veh" else "Dopamine")
+    ax.set_xlim(-0.5, 1.5)
+    ax.set_xticks([centers[0] - w / 2, centers[0] + w / 2,
+                   centers[1] - w / 2, centers[1] + w / 2])
+    ax.set_xticklabels(["Veh", "DA", "Veh", "DA"])
+    ax.tick_params(axis="x", length=0)
+    ax.text(0.25, -0.16, "NoFood", transform=ax.transAxes, ha="center", va="top", fontsize=11)
+    ax.text(0.75, -0.16, "Food", transform=ax.transAxes, ha="center", va="top", fontsize=11)
     ax.set_title(title, fontsize=11)
-    ax.set_ylabel(ylab, fontsize=9)
-    ax.spines[["top", "right"]].set_visible(False)
 
 handles, labels = axes[0].get_legend_handles_labels()
 fig.legend(handles, labels, loc="upper right", frameon=True, ncol=2)
-fig.suptitle("2x2 design: dopamine x food effects (juveniles; each bar = mean of 2 leeches; "
-             "hatched = low-conf, only Veh+NoFood is high-conf)", fontsize=13)
-fig.tight_layout(rect=[0, 0, 1, 0.94])
+fig.suptitle("2x2 design: dopamine x food effects (juveniles; each cell = mean of 2 leeches, "
+             "low-conf except Veh+NoFood)", fontsize=14)
+fig.tight_layout(rect=[0, 0.04, 1, 0.94])
 fig.savefig(f"{OUT}/design_2x2_effects.png", dpi=130)
 plt.close(fig)
 print("wrote design_2x2_effects.png")
