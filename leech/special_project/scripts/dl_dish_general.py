@@ -37,6 +37,15 @@ DISHES = {
     "v2dish0": {"video": "Video2_dish0.mp4",
                 "csv": "annotations/juv_v2dish0annotations.csv",
                 "crop": (0, 0, 548, 548), "n": 2},
+    "v1dish0": {"video": "Video1_dish0.mp4",
+                "csv": "annotations/juv_v1_dish01_annotations.csv",
+                "crop": (0, 0, 550, 550), "n": 2},
+    "v1dish1": {"video": "Video1_dish1.mp4",
+                "csv": "annotations/juv_v1_dish01_annotations.csv",
+                "crop": (0, 0, 534, 534), "n": 2},
+    "v2dish1": {"video": "Video2_dish1.mp4",
+                "csv": "annotations/juv_v2_dish1_annotations.csv",
+                "crop": (0, 0, 518, 518), "n": 2},
 }
 
 
