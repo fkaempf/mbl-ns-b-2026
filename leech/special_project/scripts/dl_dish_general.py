@@ -34,6 +34,9 @@ DISHES = {
               "crop": (0, 40, 460, 520), "n": 1},
     "dish4": {"video": "IMG_2859_dish4.mp4", "csv": "annotations/by_dish/dish4.csv",
               "crop": (0, 0, 588, 588), "n": 2},
+    "v2dish0": {"video": "Video2_dish0.mp4",
+                "csv": "annotations/juv_v2dish0annotations.csv",
+                "crop": (0, 0, 548, 548), "n": 2},
 }
 
 
