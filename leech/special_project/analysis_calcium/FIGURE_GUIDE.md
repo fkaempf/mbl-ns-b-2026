@@ -57,7 +57,7 @@ recording and synchronous across the ganglion.
 - **What**: photobleaching check.
 - **How**: mean frame intensity vs time (all 692 frames) with an exponential-decay fit.
 - **How to read**: a steep downward curve would mean bleaching that needs detrending.
-  Here the line is nearly flat (**0.5 to 0.8% loss over 240 s**), so no detrending is
+  Here the line is nearly flat (**~0.5% loss over 240 s**), so no detrending is
   needed; dF/F absorbs it.
 
 ### s1_motion.png
@@ -161,8 +161,8 @@ recording and synchronous across the ganglion.
 - **How**: autocorrelation of the ganglion signal plus the distribution of inter-peak
   intervals.
 - **How to read**: tall, evenly spaced autocorrelation side-peaks = strong periodicity;
-  the first side-peak at ~2.78 s is the period. The narrow interval histogram (CV 0.077)
-  confirms very low cycle-to-cycle jitter.
+  the first side-peak at ~2.78 s matches the cycle period (the spectral period is 2.69 s).
+  The tight interval histogram (CV 0.077) confirms very low cycle-to-cycle jitter.
 
 ### s3_regional_comparison.png
 ![s3_regional_comparison](plots/s3_regional_comparison.png)
@@ -474,13 +474,13 @@ recording and synchronous across the ganglion.
 
 ## Reading order suggestion
 
-1. `fig_dash_master.png` for the overview.
-2. `s1_motion.png` + `fig_dash_qc_panel.png` to trust the data (no motion, no bleaching).
-3. `s2b_method_comparison.png` to understand the ROIs.
-4. `s3_spectrum.png` + `fig_spec_wavelet.png` for the rhythm frequency and its stability.
-5. `fig_cycle_kymograph.png` + `fig_cycle_phase_montage.png` for the synchronous,
-   standing nature of the oscillation.
-6. `fig_dash_trace_quality.png` for the caveat that a rhythmic subset carries the signal.
+- Start with `fig_dash_master.png` for the overview.
+- Then `s1_motion.png` and `fig_dash_qc_panel.png` to trust the data (no motion, no bleaching).
+- Next `s2b_method_comparison.png` to understand the ROIs.
+- Then `s3_spectrum.png` and `fig_spec_wavelet.png` for the rhythm frequency and its stability.
+- Then `fig_cycle_kymograph.png` and `fig_cycle_phase_montage.png` for the synchronous,
+  standing nature of the oscillation.
+- Finally `fig_dash_trace_quality.png` for the caveat that a rhythmic subset carries the signal.
 
 ## Caveats that apply to every figure
 
