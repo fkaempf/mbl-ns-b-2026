@@ -21,11 +21,19 @@ from .annotate import (
 )
 from .arena import circle_to_corners, corners_to_circle, detect_circle
 from .sampling import even_frames, more_frames, planned_frames
-from .store import annotated_frames, load as load_store, upsert_frame
+from .store import annotated_frames, upsert_frame
+from .store import load as load_store
 
 
-def build_annotate_panel(ctx) -> "object":
-    from magicgui.widgets import CheckBox, ComboBox, Container, Label, PushButton, SpinBox
+def build_annotate_panel(ctx) -> object:
+    from magicgui.widgets import (
+        CheckBox,
+        ComboBox,
+        Container,
+        Label,
+        PushButton,
+        SpinBox,
+    )
 
     viewer = ctx.viewer
     config = ctx.config
@@ -222,7 +230,7 @@ def build_annotate_panel(ctx) -> "object":
         if prev is not None and prev != target and _has_leeches():
             try:
                 _persist_frame(prev)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 ctx.status(f"Auto-save failed: {exc}")
         if n_q == 0:
             progress.value = "Load a clip and Start the queue."
@@ -269,7 +277,7 @@ def build_annotate_panel(ctx) -> "object":
             leeches.setdefault(idx, {})[role] = (float(xy[i, 0]), float(xy[i, 1]))
         return leeches
 
-    def _persist_frame(frame_idx) -> "int | None":
+    def _persist_frame(frame_idx) -> int | None:
         """Write the current layers' annotation for frame_idx (upsert). Returns row
         count, or None if no video is loaded."""
         reader = ctx.state.get("reader")
@@ -373,7 +381,7 @@ def build_annotate_panel(ctx) -> "object":
         filt = _SpaceFilter()
         QApplication.instance().installEventFilter(filt)
         state["space_filter"] = filt          # keep a reference so it isn't GC'd
-    except Exception as exc:  # noqa: BLE001 — e.g. no QApplication in a stub test
+    except Exception as exc:  # e.g. no QApplication in a stub test
         progress.value = f"could not bind Space: {exc}"
 
     # Auto-build the queue (and load any existing annotations) whenever a clip opens.

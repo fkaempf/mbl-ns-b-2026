@@ -24,7 +24,7 @@ PRESETS = [
 ]
 
 
-def build_compress_panel(ctx) -> "object":
+def build_compress_panel(ctx) -> object:
     """Return a magicgui Container for the Compress tab."""
     from magicgui.widgets import (
         ComboBox,
@@ -86,7 +86,7 @@ def build_compress_panel(ctx) -> "object":
                 f"{Path(result).name} ({out_mb:.1f} MB, {pct:.0f}% of original)"
             )
             _refresh_info()
-        except Exception as exc:  # noqa: BLE001 - surface any failure to the user
+        except Exception as exc:  # surface any failure to the user
             ctx.status(f"Compress failed: {exc}")
 
     button = PushButton(name="compress", text="Compress")

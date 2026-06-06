@@ -38,7 +38,7 @@ class Config:
     compression: Compression = field(default_factory=Compression)
 
     @classmethod
-    def load(cls, path: str | Path = "arena_config.yaml") -> "Config":
+    def load(cls, path: str | Path = "arena_config.yaml") -> Config:
         root = Path(path).resolve().parent
         data = yaml.safe_load(Path(path).read_text()) or {}
 

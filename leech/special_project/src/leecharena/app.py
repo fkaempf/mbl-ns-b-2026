@@ -61,7 +61,7 @@ class AppContext:
         for fn in self._listeners:
             try:
                 fn(p)
-            except Exception as exc:  # noqa: BLE001 — a panel listener must not block loading
+            except Exception as exc:  # a panel listener must not block loading
                 self.status(f"video-load listener error: {exc}")
         return reader
 
@@ -75,7 +75,7 @@ class AppContext:
         for fn in self._frame_listeners:
             try:
                 fn(int(idx))
-            except Exception as exc:  # noqa: BLE001 — a listener must not block display
+            except Exception as exc:  # a listener must not block display
                 self.status(f"frame listener error: {exc}")
 
     def set_image(self, img) -> None:
@@ -149,7 +149,7 @@ def build_app(config, config_path, video=None):
         if path and Path(str(path)).exists():
             try:
                 _open(path)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 ctx.status(f"failed to load video: {exc}")
 
     video_edit.changed.connect(_on_video_changed)
@@ -157,9 +157,9 @@ def build_app(config, config_path, video=None):
     session = Container(widgets=[video_edit, frame_slider, status_label])
 
     # --- tabs (built before the initial open so their video-loaded listeners fire) ---
+    from .annotate_panel import build_annotate_panel
     from .compress_panel import build_compress_panel
     from .split_panel import build_split_panel
-    from .annotate_panel import build_annotate_panel
     from .track_panel import build_track_panel
 
     tabs = QTabWidget()
@@ -168,7 +168,7 @@ def build_app(config, config_path, video=None):
         try:
             panel = factory(ctx)
             tabs.addTab(_scrollable(panel.native), name)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             placeholder = Label(value=f"{name} panel failed to load:\n{type(exc).__name__}: {exc}")
             tabs.addTab(placeholder.native, f"{name} (error)")
 
@@ -184,7 +184,7 @@ def build_app(config, config_path, video=None):
         try:
             video_edit.value = str(video)
             _open(video)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             ctx.status(f"failed to load video: {exc}")
 
     return viewer

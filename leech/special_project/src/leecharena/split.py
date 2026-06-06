@@ -78,7 +78,7 @@ def split_video(video_path: str | Path, out_dir: str | Path, rois: list[tuple]) 
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 
     writers, outs = [], []
-    for i, (x, y, w, h) in enumerate(rois):
+    for i, (_x, _y, w, h) in enumerate(rois):
         out = out_dir / f"{video_path.stem}_dish{i}.mp4"
         writers.append(cv2.VideoWriter(str(out), fourcc, fps, (w, h)))
         outs.append(out)
@@ -87,7 +87,7 @@ def split_video(video_path: str | Path, out_dir: str | Path, rois: list[tuple]) 
         ok, frame = cap.read()
         if not ok:
             break
-        for (x, y, w, h), wr in zip(rois, writers):
+        for (x, y, w, h), wr in zip(rois, writers, strict=False):
             wr.write(frame[y:y + h, x:x + w])
     cap.release()
     for wr in writers:

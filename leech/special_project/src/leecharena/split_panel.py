@@ -19,8 +19,15 @@ from .split import circles_to_rois, detect_dishes, save_split_rois, split_video
 METHODS = ["mean", "median"]
 
 
-def build_split_panel(ctx) -> "object":
-    from magicgui.widgets import CheckBox, ComboBox, Container, Label, PushButton, SpinBox
+def build_split_panel(ctx) -> object:
+    from magicgui.widgets import (
+        CheckBox,
+        ComboBox,
+        Container,
+        Label,
+        PushButton,
+        SpinBox,
+    )
 
     method_combo = ComboBox(label="composite", choices=METHODS, value="mean")
     sample_spin = SpinBox(label="sample frames (0=all)", value=0, min=0, max=100000)
