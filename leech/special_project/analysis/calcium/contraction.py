@@ -366,6 +366,100 @@ def _plots(walls, dff, fs, r_peaks, out):
     fig.tight_layout(); fig.savefig(out / "delay_histogram.png", dpi=120); plt.close(fig)
 
 
+# ----------------------------------------- from-TIFF (2-channel) variant ------
+def load_tiff(path):
+    """Load a (T,C,Y,X) or (T,Y,X) tiff -> (gcamp, struct, fs, (g_ch, s_ch)).
+
+    For 2-channel GCaMP+mCherry: GCaMP = higher temporal variance (functional),
+    struct (mCherry) = lower variance. Single-channel returns the same array twice.
+    """
+    import tifffile
+    arr = np.asarray(tifffile.imread(path), dtype="float32")
+    with tifffile.TiffFile(path) as tf:
+        md = tf.imagej_metadata or {}
+    fs = round(1.0 / md["finterval"], 4) if md.get("finterval") else 1.0
+    if arr.ndim == 4:                              # (T, C, Y, X)
+        v = [arr[:, c].var(0).mean() for c in range(arr.shape[1])]
+        g, s = int(np.argmax(v)), int(np.argmin(v))
+        return arr[:, g], arr[:, s], fs, (g, s)
+    return arr, arr, fs, (0, 0)
+
+
+def annotate_line_tiff(tiff_path, out_path=None) -> None:
+    """Draw body-wall line(s) on a raw tiff (struct channel as background)."""
+    import napari
+    from magicgui.widgets import Container, PushButton, Label
+    tiff_path = Path(tiff_path)
+    out_path = Path(out_path) if out_path else tiff_path.with_suffix(".bodywall_line.json")
+    g, s, fs, chans = load_tiff(tiff_path)
+    viewer = napari.Viewer(title=f"body-wall line — {tiff_path.name}")
+    viewer.add_image(s.mean(0), name="struct mean (mCherry)", colormap="gray")
+    viewer.add_image(s, name="struct movie", colormap="gray", visible=False)
+    viewer.add_image(g, name="GCaMP movie", colormap="green", visible=False)
+    lines = viewer.add_shapes(name="bodywall line", shape_type="line",
+                              edge_color="cyan", edge_width=3)
+    if out_path.exists():
+        for seg in _load_lines(out_path):
+            lines.add([np.array([seg["p0"], seg["p1"]])], shape_type="line")
+    status = Label(value="draw a line ALONG each body wall, then Save")
+    btn = PushButton(text="Save lines")
+
+    def _save():
+        if not len(lines.data):
+            status.value = "no line drawn"; return
+        segs = [np.asarray(x) for x in lines.data]
+        out_path.write_text(json.dumps(
+            {"lines": [{"name": f"wall{i+1}", "p0": x[0].tolist(), "p1": x[1].tolist()}
+                       for i, x in enumerate(segs)], "tiff": str(tiff_path)}, indent=2))
+        status.value = f"saved {len(segs)} line(s) -> {out_path}"; print(status.value)
+
+    btn.clicked.connect(_save)
+    viewer.window.add_dock_widget(Container(widgets=[btn, status]), name="bodywall",
+                                  area="right")
+    napari.run()
+
+
+def analyze_tiff(tiff_path, line_path=None, out_dir=None) -> dict:
+    """Contraction (struct channel) vs ganglion rhythm (GCaMP) from a raw tiff."""
+    from .ganglion_activity import crosscorr_lag
+    from .phase_analysis import dominant_frequency
+    tiff_path = Path(tiff_path)
+    line_path = Path(line_path) if line_path else tiff_path.with_suffix(".bodywall_line.json")
+    out = Path(out_dir) if out_dir else tiff_path.parent / (tiff_path.stem + "_contraction")
+    out.mkdir(parents=True, exist_ok=True)
+
+    g, s, fs, chans = load_tiff(tiff_path)
+    # rhythm = global-mean dF/F of GCaMP; contraction tracked on struct (mCherry)
+    dff = signals.dff(g.reshape(len(g), -1).mean(1)[None], fs)[0]
+    r_peaks, r_period = peak_intervals(dff, fs)
+    f0, _ = dominant_frequency(dff, fs)
+
+    walls = []
+    for seg in _load_lines(line_path):
+        kymo = kymograph_perp(s, seg["p0"], seg["p1"])
+        shift = track_shift_ncc(kymo)
+        contract = -(shift - np.median(shift))
+        edge = shift - shift.min() + 1
+        peaks, period = peak_intervals(contract, fs)
+        dphase = np.angle(np.exp(1j * (phase_at(contract, f0, fs) - phase_at(dff, f0, fs))))
+        lag, lag_r = crosscorr_lag(dff, contract, max_lag=int(round(3 * fs)))
+        delays = peak_delays(r_peaks, peaks, fs)
+        walls.append({"kymo": kymo, "edge": edge, "contract": contract, "peaks": peaks,
+                      "period": period, "name": seg.get("name", "wall"),
+                      "phase_delay_ms": float(dphase / (2 * np.pi * f0) * 1000),
+                      "xcorr_lag_s": float(lag / fs), "xcorr_r": float(lag_r),
+                      "median_peak_delay_ms": float(np.median(delays) * 1000) if len(delays) else float("nan"),
+                      "excursion_px": float(np.ptp(edge)), "delays": delays})
+    _plots(walls, dff, fs, r_peaks, out)
+    result = {"tiff": str(tiff_path), "shared_freq_hz": f0, "fs": fs,
+              "gcamp_ch": chans[0], "struct_ch": chans[1],
+              "walls": [{k: w[k] for k in ("name", "phase_delay_ms", "xcorr_lag_s",
+                         "xcorr_r", "median_peak_delay_ms", "excursion_px")} for w in walls],
+              "out": str(out)}
+    (out / "summary.json").write_text(json.dumps(result, indent=2))
+    return result
+
+
 def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(description="Body-wall contraction vs ganglion rhythm")
     sub = ap.add_subparsers(dest="cmd", required=True)

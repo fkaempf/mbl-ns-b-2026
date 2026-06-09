@@ -1,0 +1,6 @@
+entity,treatment,dish,track,n_frames,low_conf,mean_radial_cm,median_radial_cm,mean_r_norm,mean_wall_dist_cm,pct_time_outer_annulus,pct_time_central_zone,center_crossings,body_length_cm
+dish1,Veh+Food,1,0,149784,False,3.192,3.654,0.709,1.308,67.7,20.9,3,1.14
+dish2,DA+Food,2,0,149784,False,4.049,4.126,0.9,0.451,99.8,0.0,0,1.13
+dish3,Veh+NoFood,3,0,149784,False,4.117,4.173,0.915,0.383,100.0,0.0,0,0.88
+dish4_leech0,DA+NoFood L0,4,0,149784,True,3.84,3.937,0.853,0.66,92.6,4.0,9,0.5
+dish4_leech1,DA+NoFood L1,4,1,149784,True,3.221,4.139,0.716,1.279,62.3,34.8,12,0.5

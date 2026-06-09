@@ -1,0 +1,6 @@
+video,label,n_with_food,mean_headdist_norm,median_headdist_norm,min_headdist_norm,frac_within_0p25r,frac_within_0p5r,frac_individuals_net_approached
+IMG_2855_dish0,2855,123,0.4751,0.482,0.0371,0.3496,0.5285,0.8889
+IMG_2857_dish0,2857,148,0.4289,0.365,0.043,0.1486,0.8243,
+PXL_20260602_183730315.TS_dish0,PXL1-d0,104,0.3063,0.178,0.0512,0.7115,0.7981,0.8
+PXL_20260602_183730315.TS_dish1,PXL1-d1,116,0.7262,0.8798,0.0198,0.1207,0.1983,1.0
+PXL_20260602_210739662.TS_dish1,PXL2-d1,195,0.4666,0.2793,0.0497,0.4718,0.6513,0.8571

@@ -919,7 +919,7 @@ wheels = [
 ]
 
 [[package]]
-name = "leechtemplate"
+name = "leech-special-project"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

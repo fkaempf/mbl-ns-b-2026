@@ -1,0 +1,6 @@
+entity,treatment,low_confidence,total_head_path_cm,total_tail_path_cm,mean_speed_cms,median_speed_cms,pct_time_moving,n_bouts,mean_bout_dur_s,mean_ibi_s,body_length_cm,total_head_path_BL,still_thresh_cms,smoothing
+dish1,Veh+Food,False,1486.8,370.4,0.1561,0.038,45.7,1836,1.19,1.53,1.14,1304.2,0.05,savgol w11 o2
+dish2,DA+Food,False,1179.2,535.0,0.118,0.0363,41.0,2978,0.62,1.06,1.13,1043.5,0.05,savgol w11 o2
+dish3,Veh+NoFood,False,374.1,175.6,0.0393,0.0155,12.1,958,0.51,4.7,0.88,425.1,0.05,savgol w11 o2
+dish4_leech0,DA+NoFood L0,True,1658.6,895.0,0.1778,0.0873,67.6,4952,0.62,0.39,0.5,3317.3,0.05,savgol w11 o2
+dish4_leech1,DA+NoFood L1,True,988.5,497.3,0.1266,0.0807,68.4,6656,0.45,0.3,0.5,1977.1,0.05,savgol w11 o2

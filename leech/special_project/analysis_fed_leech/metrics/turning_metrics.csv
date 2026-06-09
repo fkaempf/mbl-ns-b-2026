@@ -1,0 +1,6 @@
+label,treatment,dish,track,low_confidence,n_frames,body_len_cm,cm_per_px,duration_min,total_turning_deg,turning_per_min_deg,mean_abs_angvel_deg_s,median_abs_angvel_deg_s,reorient_events_per_min,mean_straightness_10s,mean_tortuosity_10s,mean_net_disp_cm_10s,mean_path_len_cm_10s,mean_speed_cm_s,speed_early_cm_s,speed_mid_cm_s,speed_late_cm_s,turn_early_deg_min,turn_mid_deg_min,turn_late_deg_min
+dish1,Veh+Food,dish1,0,False,149784,1.14,0.02,83.23,70115.2,842.4,14.043,1.534,2.283,0.1808,5.532,0.348,1.557,0.1561,0.1317,0.2173,0.1194,496.9,1422.3,608.1
+dish2,DA+Food,dish2,0,False,149784,1.13,0.0205,83.23,101304.2,1217.2,20.293,1.593,4.349,0.192,5.209,0.259,1.175,0.118,0.1261,0.0593,0.1686,786.5,461.6,2403.4
+dish3,Veh+NoFood,dish3,0,False,149784,0.88,0.0202,83.23,23175.7,278.5,4.642,0.865,0.589,0.1222,8.185,0.069,0.392,0.0393,0.0839,0.0172,0.0167,599.7,135.0,100.6
+dish4_leech0,DA+NoFood L0,dish4,0,True,149784,0.5,0.0206,83.23,113189.2,1360.0,22.671,6.513,4.59,0.1831,5.461,0.373,1.772,0.1778,0.0891,0.1796,0.2647,667.4,1580.0,1832.5
+dish4_leech1,DA+NoFood L1,dish4,1,True,149784,0.5,0.0206,83.23,122675.0,1473.9,24.572,8.552,4.722,0.1007,9.932,0.148,1.263,0.1266,0.0746,0.1634,0.1419,1421.1,1918.3,1082.4

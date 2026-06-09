@@ -1,0 +1,6 @@
+video,label,n,mean_leech_rho,median_leech_rho,food_rho(median),frac_leeches_outer(rho>0.7),mean_foodcentric_dist(normalized),frac_within_0p3_of_food
+IMG_2855_dish0.mp4,2855,260,0.5026,0.4868,0.2428,0.2769,0.5414,0.2459
+IMG_2857_dish0.mp4,2857,225,0.8424,0.8747,0.5979,0.7733,0.4129,0.3889
+PXL_20260602_183730315.TS_dish0.mp4,PXL1-d0,104,0.3481,0.2497,0.2222,0.1635,0.3906,0.5385
+PXL_20260602_183730315.TS_dish1.mp4,PXL1-d1,119,0.7746,0.8811,0.0321,0.7479,0.7708,0.0957
+PXL_20260602_210739662.TS_dish1.mp4,PXL2-d1,200,0.7353,0.7609,0.5399,0.6373,0.5257,0.4611

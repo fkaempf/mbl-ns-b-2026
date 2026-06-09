@@ -1,7 +1,7 @@
 [project]
-name = "leechtemplate"
+name = "leech-special-project"
 version = "0.1.0"
-description = "Canonical identified-cell template for leech segmental ganglia, digitized from figures"
+description = "Leech behavioral annotation/arena tools and calcium-imaging analysis"
 requires-python = ">=3.11,<3.12"
 dependencies = [
     "numpy>=1.26",
@@ -23,7 +23,6 @@ dl = ["torch>=2.2", "torchvision>=0.17", "tqdm>=4.0"]
 
 [project.scripts]
 leech-arena = "leecharena.app:main"
-leech-annotate = "leechtemplate.annotate:main"
 leech-arena-annotate = "leecharena.annotate:main"
 leech-arena-place = "leecharena.place:main"
 leech-arena-split = "leecharena.split:main"
@@ -34,7 +33,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/leechtemplate", "src/leecharena"]
+packages = ["src/leecharena"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

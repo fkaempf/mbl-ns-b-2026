@@ -1,7 +1,7 @@
 # Leech arena-orientation annotation tool — design
 
 Date: 2026-06-02
-Package: `leecharena` (sits alongside `leechtemplate` in the same repo)
+Package: `leecharena`
 
 ## Goal
 
@@ -106,7 +106,7 @@ tests/
 Pure logic (arena bbox math, sampling, store schema, metrics geometry) is unit-tested;
 `detect_circle` is tested on a synthetic drawn disk with OpenCV-headless. The napari GUI
 is a thin layer over tested modules and is not unit-tested (consistent with the
-`leechtemplate` tool).
+the annotation tool).
 
 ## Anti-scope
 

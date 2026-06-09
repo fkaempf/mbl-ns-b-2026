@@ -1,13 +1,12 @@
 # Leech tools (special_project)
 
-Two independent hand-annotation tools for the leech (*Helobdella austinensis*) work,
-each its own package under `src/`:
+Tools for the leech (*Helobdella austinensis*) work:
 
-- **`leechtemplate`** — build a canonical 2D template of identified neurons (this file, below).
 - **`leecharena`** — annotate leech orientation in a radial arena from video, and
   auto-track leech positions (see **Arena orientation tool** at the end).
+- **`analysis/calcium`** — calcium-imaging analysis for whole-leech GCaMP recordings.
 
-`uv run pytest` runs both suites.
+`uv run pytest` runs the test suite.
 
 ---
 
@@ -78,73 +77,6 @@ Notes for Windows:
 
 ---
 
-# Leech canonical identified-cell template
-
-Tooling to build a **canonical 2D template** of identified neurons in *Helobdella
-austinensis* segmental ganglia, digitized by hand from figure panels in
-Kuo et al. 2024 (*J Exp Biol* 227:jeb247419, PMC11418187).
-
-A separate calcium-imaging pipeline (not in this repo) will register each prep's
-segmented cell centroids to this template via point-set registration (pycpd), so
-identified neurons can be tracked across preps and conditions.
-
-See `docs/superpowers/specs/2026-06-02-leech-canonical-template-design.md` for the
-full design and the coordinate convention.
-
-## What gets produced
-
-- `template/ventral.csv`, `template/dorsal.csv` — named cell centroids, one row per
-  cell: `name, side (L/R/M), aspect, x, y, confidence, notes`. Ventral and dorsal are
-  **separate files**; left and right are digitized **independently** (never mirrored).
-- `template/<aspect>_calibration.json` — the 3 calibration landmarks + source image
-  hash, so each template is reproducible and re-openable.
-
-## Coordinate convention
-
-Normalized, since absolute scale varies by prep. Each figure is calibrated with three
-clicks: **anterior midline** (origin), **posterior midline** (sets the A–P axis and the
-unit scale), and a **right-side reference** (fixes the L/R sign). `x` is medial–lateral
-(right = +), `y` is anterior–posterior (posterior = +), scale is isotropic in
-ganglion-length units.
-
-## Setup
-
-```bash
-uv sync            # creates .venv with Python 3.11 and all deps (incl. napari + Qt)
-```
-
-## Annotate a figure
-
-```bash
-uv run leech-annotate --aspect ventral --image data/figures/your_panel.png
-# or: uv run python -m leechtemplate.annotate --aspect dorsal --image ...
-```
-
-In the napari window:
-1. With the **calibration** layer active, set *calibration role* and click the three
-   landmarks (anterior_midline → posterior_midline → right_ref).
-2. With the **cells** layer active, set name/side/confidence/notes in the dock widget,
-   then click each soma. New points inherit the current values; `side = auto` resolves
-   from position at save time.
-3. Click **Save template**. Use **Load existing** to resume an aspect later.
-
-## Eyeball the result
-
-```bash
-uv run python scripts/view_template.py            # both aspects
-uv run python scripts/view_template.py --aspect ventral
-```
-
-## Tests
-
-```bash
-uv run pytest
-```
-
-Tests cover the pure logic (coordinate transforms, schema I/O, naming). The napari GUI
-is intentionally not unit-tested; it is a thin layer over those tested modules.
-
----
 
 # Arena orientation tool (`leecharena`)
 
