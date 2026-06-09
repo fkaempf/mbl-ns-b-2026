@@ -118,7 +118,14 @@ def annotation_from_rows(rows):
 
 def launch(video_path: str | Path, config: Config) -> None:
     import napari
-    from magicgui.widgets import CheckBox, ComboBox, Container, Label, PushButton, SpinBox
+    from magicgui.widgets import (
+        CheckBox,
+        ComboBox,
+        Container,
+        Label,
+        PushButton,
+        SpinBox,
+    )
 
     video_path = Path(video_path)
     video_id = video_path.name

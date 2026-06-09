@@ -21,7 +21,7 @@ from .tracking import TrackParams, track_clip
 from .tracks_store import load_tracks, save_tracks, tracks_path_for, upsert_track_frame
 
 
-def build_track_panel(ctx) -> "object":
+def build_track_panel(ctx) -> object:
     from magicgui.widgets import Container, FloatSpinBox, Label, PushButton, SpinBox
 
     viewer = ctx.viewer
@@ -95,7 +95,7 @@ def build_track_panel(ctx) -> "object":
                 {"track": [int(t) for t in sub["track"]], "node": [int(n) for n in sub["node"]]})
             # a line per track connecting its two nodes
             track_lines.data = []
-            for tid, g in sub.groupby("track"):
+            for _tid, g in sub.groupby("track"):
                 if len(g) >= 2:
                     g = g.sort_values("node")
                     track_lines.add(
@@ -130,7 +130,7 @@ def build_track_panel(ctx) -> "object":
             state["df"] = load_tracks(state["path"])
             show_tracks_for(fr)        # refresh the body line (guarded against re-entry)
             progress.value = f"corrected frame {fr} ({len(rows)} pt)"
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             ctx.status(f"correction save failed: {exc}")
 
     track_layer.events.data.connect(on_track_edit)
@@ -149,7 +149,7 @@ def build_track_panel(ctx) -> "object":
         progress.value = f"tracking frames {start}..{stop}…"
         try:
             rows = track_clip(video, _params(), frame_range=(start, stop), seeds=_seeds())
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             progress.value = f"verify failed: {exc}"
             return
         state["df"] = pd.DataFrame(rows) if rows else None
@@ -237,7 +237,7 @@ def build_track_panel(ctx) -> "object":
         @viewer.bind_key("Left", overwrite=True)
         def _prev_frame(_v):
             ctx.set_frame(state["frame"] - 1)
-    except Exception as exc:  # noqa: BLE001 — e.g. a stub viewer in tests
+    except Exception as exc:  # e.g. a stub viewer in tests
         progress.value = f"could not bind arrow keys: {exc}"
 
     def on_video(path):

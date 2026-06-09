@@ -41,7 +41,7 @@ class VideoReader:
     def close(self) -> None:
         self._cap.release()
 
-    def __enter__(self) -> "VideoReader":
+    def __enter__(self) -> VideoReader:
         return self
 
     def __exit__(self, *exc) -> None:
