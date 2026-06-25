@@ -1,0 +1,58 @@
+# ─── macOS / editor junk ─────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+*.swp
+*~
+.idea/
+.vscode/
+
+# ─── Python ──────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.pytest_cache/
+.ipynb_checkpoints/
+*.egg-info/
+.pixi/
+
+# ─── Raw data / media — NEVER commit (videos & archives are multi-GB) ─
+*.avi
+*.mp4
+*.mov
+*.mkv
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+
+# ─── Data products / outputs (large, regenerable) ────────────────────
+*.h5
+*.hdf5
+*.npy
+*.npz
+*.mat
+*.abf
+*.pickle
+*.pkl
+*.csv
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.tif
+*.tiff
+*.pdf
+
+# ─── ML model checkpoints / training logs ────────────────────────────
+*.meta
+*.index
+*.data-*
+events.out.tfevents.*
+*.ckpt
+
+# ─── Downloaded DeepLabCut demo project (vendored, not our code) ──────
+mouse/cheese3d/practice/
