@@ -19,7 +19,7 @@ from scipy.signal import find_peaks
 import scalloping as sc
 from utils import experiment_id, experiment_label, load_trajectory, save_panel
 
-EXPERIMENT = "260624/2026_06_24/rig1_experiment_06"
+EXPERIMENT = "20260624/rig1_experiment_06"
 BOUNCE_HALFWIN_S = 1.2            # window each side of contact for the aligned average
 
 WINDOWS = {                       # name -> (t_start_s, t_end_s)
@@ -100,7 +100,7 @@ def analyse_confinement():
     ncyc = Ucyc.shape[0]
 
     # ---- standalone panels, each saved on its own ----
-    sub = f"{eid}_scalloping"
+    sub = "scalloping"
     ttl = f"{label} · confinement scalloping (900-1800s)"
 
     def p_trajectory(ax):
@@ -280,7 +280,7 @@ def analyse_controls():
         print(f"{d['name']:18s} {d['r95']:10.1f}  {d['turn_rate']:13.1f}  "
               f"{d['med_speed']:9.1f}  {d['med_absomega']:9.0f}   {d['fpk']:8.2f}")
 
-    sub = f"{eid}_controls"
+    sub = "controls"
     ttl = f"{label} · confinement vs menotaxis controls"
     colors = {"menotaxis_before": "#4477aa", "confinement": "#cc3311",
               "menotaxis_after": "#228833"}

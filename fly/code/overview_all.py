@@ -5,7 +5,7 @@ panel — the three 15-minute protocol windows plus the full track — so you ca
 which recordings show the confinement/scalloping pattern (a bounded, scalloped
 disc in the 15-30 min window) and decide which to analyse.
 
-Saves plots/raw_traces/<experiment>.png. Run from this directory:
+Saves plots/traces/<experiment>.png. Run from this directory:
     python overview_all.py
 """
 
@@ -38,7 +38,7 @@ def overview(folder):
         else:
             ax.axis("off")
         ax.set_title(name, fontsize=9)
-    save_fig(fig, f"{eid}.png", title=rel, subdir="raw_traces")
+    save_fig(fig, f"{eid}.png", title=rel, subdir="traces")
     plt.close(fig)
     return rel, time_s[-1] / 60
 

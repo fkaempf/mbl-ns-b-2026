@@ -34,6 +34,22 @@ def fulltrack_csv(folder):
     return matches[0]
 
 
+def vrpos_csv(folder):
+    """Return the Unity VR ``vrpos`` CSV for an experiment ``folder``.
+
+    ``folder`` is resolved like :func:`fulltrack_csv` (absolute, relative to
+    :data:`DATA_DIR`, or a direct path to the CSV).
+    """
+    if not os.path.isabs(folder):
+        folder = os.path.join(DATA_DIR, folder)
+    if os.path.isfile(folder):
+        return folder
+    matches = sorted(glob.glob(os.path.join(folder, "*unity_vr_driver_vrpos.csv")))
+    if not matches:
+        raise FileNotFoundError(f"no *_unity_vr_driver_vrpos.csv in {folder}")
+    return matches[0]
+
+
 def load_trajectory(folder):
     """Load an experiment's fulltrack CSV and derive lab-frame position and time.
 
@@ -46,6 +62,65 @@ def load_trajectory(folder):
     time_unix_nano = np.asarray(data.timestamp)
     time_s = (time_unix_nano - time_unix_nano[0]) / 1e9
     return data, x, y, time_s
+
+
+def _moving_average(a, win):
+    return a if win <= 1 else np.convolve(a, np.ones(win) / win, mode="same")
+
+
+def _interp_circular(xq, xp, deg):
+    """Interpolate a circular signal (degrees) onto ``xq`` via unit vectors, so it
+    is correct across the +/-180 wrap (plain interpolation is not)."""
+    rad = np.radians(deg)
+    cos_i = np.interp(xq, xp, np.cos(rad))
+    sin_i = np.interp(xq, xp, np.sin(rad))
+    return np.degrees(np.arctan2(sin_i, cos_i))
+
+
+def load_combined(folder, vr_heading="proper_rotation_z", min_speed_mm_s=5.0,
+                  max_speed_mm_s=None, smooth_win=7):
+    """Merge an experiment's fulltrack and vrpos logs onto one timeline.
+
+    The two files share a unix clock, so the vrpos channels are interpolated onto
+    the fulltrack timestamps (heading interpolated circularly). Walking speed is
+    derived from the fulltrack lab-frame position; samples slower than
+    ``min_speed_mm_s`` are dropped so the headings reflect real locomotion.
+
+    Returns a DataFrame with ``t`` (s from start), ``fx, fy`` (mm) and ``fh`` (deg,
+    wrapped) from fulltrack, ``vrx, vry, vrh`` interpolated from vrpos, and
+    ``speed`` (mm/s). Pass ``min_speed_mm_s=0`` to keep every sample.
+    """
+    ft = pd.read_csv(fulltrack_csv(folder), usecols=[
+        "timestamp", "integrated_position_lab_0", "integrated_position_lab_1",
+        "integrated_heading_lab"])
+    t_abs = ft.timestamp.to_numpy(float) / 1e9                  # unix seconds
+    fx = -ft.integrated_position_lab_1.to_numpy() * BALL_RADIUS_MM
+    fy = ft.integrated_position_lab_0.to_numpy() * BALL_RADIUS_MM
+    fh = (np.degrees(ft.integrated_heading_lab.to_numpy()) + 180) % 360 - 180
+
+    vr = pd.read_csv(vrpos_csv(folder), usecols=[
+        "last_timestamp", "proper_position_x", "proper_position_y", vr_heading])
+    vr = vr.sort_values("last_timestamp")
+    vt = vr.last_timestamp.to_numpy()
+    vrx = np.interp(t_abs, vt, vr.proper_position_x.to_numpy())
+    vry = np.interp(t_abs, vt, vr.proper_position_y.to_numpy())
+    vh = vr[vr_heading].to_numpy()
+    if vr_heading == "last_heading":
+        vh = np.degrees(vh)
+    vrh = _interp_circular(t_abs, vt, (vh + 180) % 360 - 180)
+
+    fs = 1.0 / np.median(np.diff(t_abs))
+    speed = np.hypot(np.gradient(_moving_average(fx, smooth_win)) * fs,
+                     np.gradient(_moving_average(fy, smooth_win)) * fs)
+
+    df = pd.DataFrame(dict(t=t_abs - t_abs[0], t_unix=t_abs, fx=fx, fy=fy, fh=fh,
+                           vrx=vrx, vry=vry, vrh=vrh, speed=speed))
+    df = df[(t_abs >= vt[0]) & (t_abs <= vt[-1])]               # vrpos coverage only
+    if min_speed_mm_s:
+        df = df[df.speed >= min_speed_mm_s]
+    if max_speed_mm_s:                                          # drop tracking-glitch jumps
+        df = df[df.speed <= max_speed_mm_s]
+    return df.reset_index(drop=True)
 
 
 def experiment_label(folder):
@@ -81,11 +156,12 @@ def draw_trajectory(ax, x, y, *, mark_start=False, scalebar=True, title=None):
         ax.set_title(title, fontsize=9)
 
 
-def save_fig(fig, filename, title=None, subdir=None):
+def save_fig(fig, filename, title=None, subdir=None, dpi=450):
     """Save ``fig`` into :data:`PLOTS_DIR` (or a ``subdir`` of it), created if needed.
 
     ``title`` is added as a figure suptitle so the saved image names its source data.
-    ``subdir`` groups a set of standalone panels into their own folder.
+    ``subdir`` groups a set of standalone panels into their own folder. ``dpi`` raises
+    the output resolution for detailed figures.
     """
     if title:
         fig.suptitle(title, fontsize=10)
@@ -93,7 +169,7 @@ def save_fig(fig, filename, title=None, subdir=None):
     os.makedirs(out, exist_ok=True)
     # bbox_inches='tight' trims the surrounding whitespace so the saved image fits
     # its content (trajectories use equal aspect, which otherwise leaves wide margins).
-    fig.savefig(os.path.join(out, filename), dpi=150, bbox_inches='tight')
+    fig.savefig(os.path.join(out, filename), dpi=dpi, bbox_inches='tight')
 
 
 def save_panel(subdir, filename, draw, *, figsize=(6.5, 5), title=None, subplot_kw=None):

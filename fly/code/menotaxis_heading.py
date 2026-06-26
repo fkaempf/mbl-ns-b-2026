@@ -21,7 +21,7 @@ import numpy as np
 import scalloping as sc
 from utils import experiment_id, experiment_label, load_trajectory, save_panel
 
-EXPERIMENT = "260624/2026_06_24/rig1_experiment_06"
+EXPERIMENT = "20260624/rig1_experiment_06"
 
 WINDOWS = {"before": (0, 900), "after": (1800, np.inf)}
 
@@ -77,7 +77,7 @@ def main():
     shift = wrap(res["after"]["mu"] - res["before"]["mu"])
     print(f"before->after preferred-direction shift: {np.degrees(shift):.0f} deg")
 
-    sub = f"{eid}_menotaxis"
+    sub = "menotaxis"
     ttl = f"{label} · menotaxis heading before vs after confinement"
     colors = {"before": "#4477aa", "after": "#228833"}
 

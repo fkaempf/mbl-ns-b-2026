@@ -371,6 +371,19 @@ def circ_mean_R(angles, weights=None):
     return float(np.arctan2(s, c)), float(np.hypot(c, s))
 
 
+def circ_sem(angles, n_eff=None):
+    """Standard error of the circular mean (rad) for ``angles`` (rad).
+
+    Uses the circular standard deviation ``sqrt(-2 ln R)`` over ``sqrt(N)``. Pass
+    ``n_eff`` to discount autocorrelation (e.g. one independent sample per second)
+    instead of the raw sample count, which otherwise makes the SEM far too small.
+    """
+    _, R = circ_mean_R(angles)
+    n = len(angles) if n_eff is None else n_eff
+    R = min(max(R, 1e-9), 1 - 1e-9)
+    return float(np.sqrt(-2 * np.log(R)) / np.sqrt(max(n, 1)))
+
+
 def straight_bouts(omega, speed, fs, max_omega_deg=20.0, min_speed=1.0, min_dur_s=2.0):
     """Index intervals of sustained straight walking (menotaxis fixation bouts).
 

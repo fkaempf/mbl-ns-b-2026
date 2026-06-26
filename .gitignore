@@ -4,6 +4,7 @@
 .LSOverride
 *.swp
 *~
+.~lock.*#
 .idea/
 .vscode/
 
@@ -46,6 +47,14 @@ env/
 *.tif
 *.tiff
 *.pdf
+
+# ─── Analysis figure output (regenerable; written by fly/code scripts) ─
+fly/plots/
+
+# ─── fly raw-experiment metadata/config (raw artifacts, not code) ─────
+fly/data/**/*.json
+fly/data/**/*.yaml
+fly/data/**/*.yml
 
 # ─── ML model checkpoints / training logs ────────────────────────────
 *.meta
