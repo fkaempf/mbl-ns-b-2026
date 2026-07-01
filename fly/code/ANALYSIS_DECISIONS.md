@@ -73,7 +73,10 @@ sync when a decision changes.
 ## Single-bounce analysis (`bounces.py`, `bounce_analysis.py`)
 
 - A **bounce** = a laser-on event: `light_sugar_commands.csv`
-  `laser_exponential_set_end_level → 255`, deduped with a **1 s refractory**.
+  `laser_exponential_set_end_level` ramps to a **positive level** (`> 0`), deduped with
+  a **1 s refractory**. Detect on `> 0`, not `== 255`: the **laser power differs by
+  run** — older runs (20260625) ramp to 255, newer ones (20260626/27) to 125, so a
+  hardcoded 255 silently misses every newer bounce.
 - Each bounce is matched to the **nearest collision** (`vrcollisions.csv`, within
   1 s) to get the wall surface point (origin) and its normal. (The `vrcollisions`
   header is shifted — read positionally.)
@@ -109,60 +112,113 @@ billiard-style) from a **reversal** (fly turns back the way it came — an avoid
 clean and incidence-structured; departures are not). Caveat: ~20 bounces per
 incidence bin, so the histogram is noisy — suggestive, not conclusive.
 
-## Bounce-to-bounce analysis (`bounce2bounce.py`)
+## Per-bounce gallery + clustering (`bounce_clusters.py`)
 
-- Reuses the **same bounce definition** as the single-bounce analysis
-  (`bo.laser_on_times`: laser-on, 1 s refractory) and the same runs **72/55/46**.
-  It imports `bounces.py` **read-only** and adds no compute there.
-- A **bounce-to-bounce trial** is the interval between two **consecutive** bounces
-  (the fly is zapped, walks, is zapped again). The trial structure needs only the
-  bounce **times**; the trajectory is aligned by **translation only** (see below).
-- **`MAX_TRIAL_S = 120 s`** drops over-long inter-bounce gaps. Consecutive laser-ons
-  can straddle a barrier vanishing (`barrier_duration 360 s`) and the next one
-  appearing (`cooldown_duration 60 s`), which would make a "trial" that is mostly
-  walking with no wall. 100 bounces give 60 trials after the cap.
+One figure per bounce (all 100 in `plots/bounce_gallery/`), 30 s before / 60 s after
+the laser, in the wall frame with the true finite wall, coloured by time, titled with
+the bounce order (`bounce 13/36`), its time in the session, and its k-means type.
+
+- **Bounce = laser activation**, the same definition as everywhere else
+  (`bo.laser_on_times`: `laser_exponential_set_end_level -> 255`, 1 s refractory).
+  `tau = 0` is the laser-on time; the black dot is the fly's VR position at that
+  instant. The collision log is **not** used here at all.
+- **The barrier is a soft laser TRIGGER zone, not a physical wall.** This was the key
+  realisation while debugging "the fly phases through the wall":
+  - *Config* (`eternarig_experiment_logic_barrier`) defines a barrier only by
+    geometry (`barrier_width 100`, `barrier_thickness 2`, `barrier_distance_to_fly 5`)
+    and the laser hurt zone (`laser_margin_x 0.05`, `laser_margin_y 2.5`). There is
+    **no** collider / clamp / rigidbody / pushback parameter.
+  - *Data*: `proper_position` is the only real VR position (`last_position` is all
+    zeros, unused) and it crosses the wall **smoothly at walking speed** (8 ms
+    sampling, no teleport, speed under the 50 mm/s cap). It is **not** clamped.
+  - So the fly's VR position is never mechanically stopped: it walks straight through
+    the wall and the laser is the only consequence. The "correction" in this paradigm
+    is the aversive **laser**, not a physical barrier. Wall crossings are **real
+    behaviour**, not glitches or a geometry bug.
+- **"Phasing" breaks down as:** of the bounces that pass the wall plane, ~42/100 walk
+  **around the finite wall ends** (`|along| > 50 mm`; the wall is only 100 mm wide),
+  and ~17/100 push **through the mid-wall**, gradually, at normal walking speed. Both
+  are real. (Distinct from the true VR *teleport* glitches in `barrier_traces`, which
+  are single ~800-unit jumps; none of those occur here.)
+- **Wall placement is from the config barrier geometry, not the collision log.** Each
+  bounce is mapped to a `RectMaze` (its `position` = wall centre, `rotation_z`,
+  `width`), and the frame is built from that. The collision normal (`vrcollisions`)
+  was tried and **rejected**: it aligns with the true wall orientation only ~half the
+  time (parallel/crossing walls and noisy normals), whereas `rotation_z` is exact and
+  `barrier_traces` confirms the config geometry overlays the trajectory correctly.
+- **Caveat - bounce-to-barrier matching is imperfect.** Barriers persist 360 s and
+  the fly revisits them, so neither "most-recent-created" nor "nearest active" wins:
+  both put the fly inside the reconstructed hurt zone (wall `+/- laser_margin`) for
+  only ~55 % of bounces (23/36, 19/36, 9/28); for the rest the laser fires while the
+  fly is 4-39 mm from the nearest active wall. The residual gap is consistent with the
+  `barrier_distance_to_fly = 5` spawn offset plus a laser-trigger condition the logs
+  do not fully expose. So the drawn wall is the **best config-based estimate** of the
+  barrier, not a guaranteed exact hurt-zone fit. This is why some bounces show the fly
+  zapped slightly in front of, or behind, the drawn wall.
+- **Clustering** is plain k-means (sklearn; `tslearn` is not installed) on the
+  resampled `(U, V)` trajectory over `CLUST_WIN = -10..+30 s`, standardised, `k = 5`,
+  relabelled 0..4 by size for stable colours. `cluster_overview.png` shows each type's
+  members + mean; the single plots carry the type in their title and filename. The
+  types separate roughly into along-wall, straight-off-the-wall, crossing, and
+  lingering responses (type 0 is the large low-displacement "lingers near wall" group).
+- **Scale bar dodges the trace:** `utils.emptiest_corner` places it in whichever axis
+  corner holds the fewest trajectory points.
+
+### Hand-curation of bounces (`bounce_select.py` -> `*_good/`)
+
+Because the auto bounce-to-barrier matching is imperfect (above), bounces are curated
+by eye. `bounce_select.py` is a small **napari** tool: it stacks every bounce thumbnail,
+lets you tag good ones (`g`), and **autosaves** the selection to
+`plots/bounce_gallery/good_bounces.csv` (keyed by `eid` + laser-on index). Each bounce
+in `bo.bounces`/`extract` now carries that `(eid, i)` key so the CSV maps back exactly.
+When the CSV exists, `bounce_analysis` and `bounce_clusters` auto-restrict to the
+curated set (`bo.good_set()`, toggled by `USE_GOOD`) and write to parallel `*_good/`
+folders, leaving the all-bounces outputs intact. `interwall_analysis` can also restrict
+(a trial is kept only if the just-removed wall had a curated-good bounce), but defaults
+`USE_GOOD = False`: the curation is keyed by laser bounce, so it would drop exactly the
+zero-bounce walls that the interwall analysis is built to include. Note the collision-
+frame analysis (`bounce_analysis`) keeps fewer than the gallery curated (e.g. 44 of 52):
+bounces without a collision logged within 1 s have no collision-frame trace, so they
+exist in the config-barrier gallery but not in the pooled wall-aligned analysis.
+
+## Interwall analysis (`interwall_analysis.py`)
+
+Replaced the earlier bounce-to-bounce trial. The old trial was zap-to-zap
+(fly-driven), which **dropped the walls the fly never hit** (5 of 33 here) and needed a
+`MAX_TRIAL_S` cap purely to throw away inter-bounce gaps that straddled a wall
+vanishing. The wall on/off cycle is the experiment's real unit, so the trial is now
+defined by it.
+
+- **A trial is one interwall gap:** from a wall's `DESTROY` (wall off, the origin,
+  `t = 0`) to the next wall's `CREATE` (wall on). `wall_cycles()` parses
+  `CREATE`/`DESTROY` from `vrcmd.csv`, matched by `RectMaze#id` (walls are presented
+  strictly **one at a time**), giving each wall's `t_on`, `t_off` and geometry. N walls
+  give **N-1** trials and **every** transition is included. Runs **72/55/46** give
+  **32/20/27 = 79 trials**.
+- **The off-gap is a near-constant ITI:** median **60 s** (`05_inter_wall_interval`).
+  This is the protocol's fixed cooldown, not fly behaviour, so unlike the old bimodal
+  IBI there is nothing to read from its distribution. **`MAX_TRIAL_S = 180 s`** now only
+  drops pathological gaps (a session pause or a missing next wall), not the signal.
 - **Frames:** trajectory and tortuosity use **vrpos** (the wall lives there); speed
-  uses the **fulltrack** walking speed from `load_combined`. Same split as the rest
-  of the barrier work.
-- **Trajectory alignment is translate-only:** each trial's start bounce is moved to
-  the origin, the VR-world orientation is **kept** (no rotation). This is the raw
-  data, so the trials fan out in every direction rather than being folded onto a
-  common wall frame.
-- **Each trial's own wall is drawn** on the trajectory plot, true to config
-  (width 100, thickness 2) plus the laser margins. The bounce is matched to the
-  nearest collision (within `bo.MATCH_S = 1 s`) and the logged `RectMaze` nearest
-  that contact gives the wall geometry, translated into the trial frame. Because the
-  alignment is translate-only the walls keep their own orientations, so they overlay
-  as a small rosette around the bounce (the 100 mm wall is much shorter than the
-  inter-bounce excursions). All 60 trials matched a wall.
-- **Speed is shown twice** because inter-bounce intervals differ: an **unnormalised**
-  version (speed vs seconds since the bounce, trials ending at their own next bounce,
-  mean drawn only where `>= MIN_TRIALS` trials still run) and a **time-normalised**
-  version (speed vs phase 0->1 of the interval), so the shape is comparable across
-  trials of different length.
-- **Tortuosity** = path length / straight-line net displacement (always `>= 1`),
-  computed per bounce in **10 s bins**, four before and four after (`-40..0` and
-  `0..+40 s`), bounce-aligned and pooled over **all** bounces (not just trial-internal
-  ones). Bins with net displacement below `MIN_DISP_MM = 1 mm` give an undefined
-  ratio and are dropped (NaN), so a near-stationary bin cannot blow the ratio up.
+  uses the **fulltrack** walking speed from `load_combined`. Same split as the rest of
+  the barrier work.
+- **Trajectory alignment is translate-only:** each trial's wall-off position is moved to
+  the origin, VR-world orientation **kept**, so trials fan out in every direction (the
+  raw data). Both walls are drawn in the trial frame, true to config (100 x 2) plus the
+  laser margins: the **next wall** (wall on, solid, where the trial is heading) and the
+  **just-removed wall** (faint, where the fly came from).
+- **Speed is shown twice:** **unnormalised** (vs seconds since wall off, mean drawn only
+  where `>= MIN_TRIALS` trials still run) and **time-normalised** (vs gap phase
+  0 = wall off, 1 = wall on), since gaps vary slightly in length.
+- **Tortuosity is aligned to wall off** (`04_tortuosity`): path length / net displacement
+  in **10 s bins**, four before (`-40..0`, wall still up) and four after (`0..+40`, no
+  wall), pooled over **all 81 walls** with a logged `DESTROY`. Bins below
+  `MIN_DISP_MM = 1 mm` of net displacement are dropped (NaN). It **dips while the wall is
+  up and rises once the wall is gone**: the path is straighter with the wall present.
+- **Off-period adaptation test** (`06_offspeed_over_time`): each trial's mean off-period
+  speed vs its wall-off time in the session, pooled Spearman. Replaces the old
+  IBI-over-time learning test, which is meaningless now the ITI is fixed; the result is
+  in the panel title.
 
-### Exploratory: the trial structure itself (`05_inter_bounce_interval.png`, `06_ibi_over_time.png`)
-
-Added because the analysis is named for a "trial structure" but never characterised
-it: how long does the fly stay away from the wall between zaps, and does that change
-over the session (avoidance learning)? The inter-bounce interval (IBI) is the
-trial duration; both plots use **all** bounces (uncapped), pooled over 72/55/46
-(97 IBIs).
-
-- **The IBI distribution is bimodal** (median 103 s). A **short mode** (~18 % of
-  IBIs under 20 s) is the fly **lingering in the hurt zone and being re-zapped**, not
-  a left-and-returned trip; a **trough** sits around 30-70 s; the main **return-trip
-  mode** peaks at ~90-200 s, with a long tail (the barrier on/off cycle and
-  wandering). This is why **`MIN_TRIAL_S` exists** (default `0` = keep all): setting
-  it to ~20-30 s isolates genuine return trips from re-zaps. It is left **off by
-  default** so the other four plots are unchanged unless deliberately filtered.
-- **No learning trend** (honest negative, like the scalloping rhythm). Across the
-  session the capped IBI is flat: pooled **Spearman rho = -0.01, p = 0.91** (n = 60
-  trials `<= cap`), and per fly none is significant (p = 0.19 / 0.99 / 0.77).
-  First-half vs second-half median IBI is unchanged (~85 vs ~87 s). The fly does
-  **not** learn to avoid the wall, nor sensitise, over a single session.
+`USE_GOOD` is **off by default** here (see the curation note above): the bounce-keyed
+curation would exclude exactly the zero-bounce walls this analysis exists to keep.

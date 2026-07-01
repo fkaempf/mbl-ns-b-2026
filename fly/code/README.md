@@ -23,12 +23,24 @@ code/
 
   confinement_scalloping.py     scalloping in a virtual enclosure + within-fly controls
 
-  barrier_traces.py             VR trajectory (coloured by time) with barrier walls
+  barrier_traces.py             all barrier runs as vector PDF: trace + walls, red while
+                                shocked, heading@create; good runs marked; angles/arrows/plain
   barrier_approaches.py         fly's reaction to one barrier over time, barrier-aligned
 
-  bounce2bounce.py              bounce-to-bounce trials (consecutive laser bounces):
-                                trajectories, speed (raw + time-normalised), tortuosity,
-                                inter-bounce interval (trial structure + learning test)
+  bounces.py                    bounce compute: laser-on detection, wall-aligned frames,
+                                incidence/exit angles, the good_set() curation helper
+  bounce_analysis.py            pooled bounce analysis: mean +/- SEM, incidence bins,
+                                in/out scatter, reflection (continue vs reverse)
+  interwall_analysis.py         interwall trials (wall off -> next wall on, from the
+                                CREATE/DESTROY cycle): trajectories, speed (raw +
+                                time-normalised), tortuosity around wall off, inter-wall
+                                interval (trial structure + off-period adaptation test)
+  bounce_clusters.py            per-bounce gallery (one figure each, true finite wall,
+                                30s before/60s after) + k-means clustering of bounce types
+  bounce_select.py              napari tool to hand-curate good bounces -> good_bounces.csv
+                                (double-click start_bounce_select.command to launch)
+  wall_trials.py                wall-presentation trials (wall-ON to wall-OFF, paired by
+                                serial): wall-frame trajectories, approach/retreat, summary
 ```
 
 Barriers (paradigm `eternarig_experiment_logic_barrier`) are `RectMaze` walls
@@ -37,18 +49,28 @@ rotation_z, size = scale = width x thickness), in the vrpos world frame. The
 aversive-laser "hurt zone" is the wall inflated by `laser_margin_x/y` from
 `config.yaml`. `vrcollisions.csv` logs every wall contact.
 
+**Curating bounces.** `bounce_select.py` (napari) tags good bounces into
+`plots/bounce_gallery/good_bounces.csv` (autosaves on every tag). When that file
+exists, the bounce analyses auto-restrict to the curated set and write to parallel
+`*_good/` folders (`bounces_good/`, `bounce_gallery_good/`, `interwall_good/`); the
+`USE_GOOD` flag at the top of each script toggles this off.
+
 Figures are written to **`fly/plots/`** (one level up from `code/`; git-ignored),
 sorted into one folder **per plot type**:
 
 ```
 plots/
-  traces/        raw trajectory traces (per-experiment overviews + all-fly overlays)
-  barriers/      trajectory + barrier walls
-  bounce2bounce/ bounce-to-bounce trial trajectories, speed, tortuosity
-  scalloping/    confinement scalloping panels
-  controls/      confinement vs menotaxis control panels
-  menotaxis/     menotaxis heading panels
-  heading/       VR heading histograms, before/after scatter, sampling traces
+  traces/         raw trajectory traces (per-experiment overviews + all-fly overlays)
+  barriers/       barrier runs (PDF): angles/ arrows/ plain/ variants
+  bounces/        pooled bounce analysis (10s/30s/60s/120s windows)
+  bounce_gallery/ one figure per bounce (true finite wall) + k-means cluster overview
+  interwall/      interwall (wall off -> on) trial trajectories, speed, tortuosity
+  wall_trials/    wall-presentation (wall-on to wall-off) trial trajectories + dynamics
+  *_good/         the same analyses restricted to the hand-curated bounces
+  scalloping/     confinement scalloping panels
+  controls/       confinement vs menotaxis control panels
+  menotaxis/      menotaxis heading panels
+  heading/        VR heading histograms, before/after scatter, sampling traces
 ```
 
 ## The experiment
