@@ -12,6 +12,7 @@ The laser hurt zone is drawn on every trajectory plot.
 Run from this directory:  python bounce_analysis.py
 """
 
+import os
 import warnings
 
 import numpy as np
@@ -20,11 +21,8 @@ import matplotlib.pyplot as plt
 import bounces as bo
 from utils import save_fig
 
-EXPERIMENTS = [
-    "20260625/rig1_experiment_72",
-    "20260625/rig1_experiment_55",
-    "20260625/rig1_experiment_46",
-]
+MODE = "good"      # "good" = the curated runs, "all" = every barrier run
+EXPERIMENTS = bo.barrier_experiments(MODE)
 WINDOWS_S = [10, 30, 60, 120]
 BINS = [(15, 40), (40, 70), (70, 90)]
 MAXWIN = 120.0
@@ -34,15 +32,21 @@ CROSS_TOL = 2.0          # mm; a dip past the wall within GLITCH_WIN_S = a glitc
 MEAN_WINDOW_S = 10.0     # outer cap: the mean +/- SEM is never drawn beyond this window
 FAINT_ALPHA = 0.2        # individual-trace opacity
 COH_MIN = 0.4            # stop drawing the mean once directional coherence drops below this
+USE_GOOD = False         # good now = the curated experiment set (MODE); use all their bounces
 
 APPROACH, DEPART = "#1f77b4", "#d62728"
 BIN_COLORS = ["#4477aa", "#228833", "#aa3377"]
 
 
+def load_good():
+    """The (eid, laser-on index) set tagged good in the napari selector, or None."""
+    return bo.good_set() if USE_GOOD else None
+
+
 def draw_wall(ax):
     ax.axhspan(-bo.LASER_MARGIN - bo.WALL_TH / 2, bo.LASER_MARGIN + bo.WALL_TH / 2,
-               color="red", alpha=0.15, zorder=0, label="hurt zone")
-    ax.axhspan(-bo.WALL_TH / 2, bo.WALL_TH / 2, color="0.4", zorder=1, label="wall")
+               color="red", alpha=0.15, zorder=0)
+    ax.axhspan(-bo.WALL_TH / 2, bo.WALL_TH / 2, color="0.4", zorder=1)
 
 
 def mean_arrays(group):
@@ -110,7 +114,8 @@ def plot_all(group, tau, W, sub):
     plot_mean(ax, tau, m, cmask & (tau <= 0), APPROACH, "approach (mean)")
     plot_mean(ax, tau, m, cmask & (tau >= 0), DEPART, "departure (mean)")
     finish(ax, f"all bounces (n={len(group)}) +/- SEM, +/-{W}s")
-    ax.legend(fontsize=7, loc="upper right")
+    ax.legend(fontsize=8, loc="upper right", labelcolor="linecolor",
+              handlelength=0, handletextpad=0, frameon=False)
     save_fig(fig, "all_bounces.png", subdir=sub); plt.close(fig)
 
 
@@ -132,7 +137,8 @@ def plot_binned(groups, tau, W, sub):
         if g:
             plot_mean(ax, tau, mean_arrays(g), mean_mask(g, tau), col, f"{lo}-{hi} deg (n={len(g)})")
     finish(ax, f"incidence bins, mean +/- SEM, +/-{W}s")
-    ax.legend(fontsize=7, loc="upper right")
+    ax.legend(fontsize=9, loc="upper left", bbox_to_anchor=(1.01, 1.0),
+              labelcolor="linecolor", handlelength=0, handletextpad=0, frameon=False)
     save_fig(fig, "binned_all.png", subdir=sub); plt.close(fig)
 
 
@@ -149,30 +155,46 @@ def plot_scatter(group, sub):
                facecolor="none", edgecolor="0.6", s=25, label="<15 deg (dropped)")
     ax.set(xlim=(0, 90), ylim=(0, 90), xlabel="incidence in (deg)",
            ylabel="outgoing angle (deg)", title="bounce: in vs out angle")
-    ax.set_aspect("equal"); ax.legend(fontsize=7); ax.spines[["top", "right"]].set_visible(False)
+    ax.set_aspect("equal")
+    ax.legend(fontsize=8, labelcolor="linecolor", handlelength=0, handletextpad=0, frameon=False)
+    ax.spines[["top", "right"]].set_visible(False)
     save_fig(fig, "in_out_scatter.png", subdir=sub); plt.close(fig)
 
 
 def plot_reflection(group, sub):
-    """Does the fly continue along the wall (reflect) or turn back (reverse)?"""
+    """Continue along the wall or turn back? Exit direction in the wall frame: <90 =
+    continue, >90 = reverse. A ~flat distribution means the exit is random."""
     inc = np.array([b["incidence"] for b in group])
     od = np.array([b["out_dir"] for b in group])
-    ok = ~np.isnan(od)
-    fig, ax = plt.subplots(figsize=(7, 4.5))
-    bins = np.linspace(0, 180, 19)
-    for (lo, hi), col in zip(BINS, BIN_COLORS):
-        m = ok & (inc >= lo) & (inc < hi)
-        if m.sum():
-            ax.hist(od[m], bins=bins, histtype="step", lw=2, color=col,
-                    label=f"{lo}-{hi} deg (n={m.sum()})")
-    ax.axvline(90, color="0.5", ls="--", lw=1)
-    binned = ok & (inc >= MIN_INCIDENCE)
-    rev = np.mean(od[binned] > 90) if binned.sum() else np.nan
-    ax.set_xlim(0, 180); ax.set_xticks([0, 45, 90, 135, 180])
-    ax.set_xlabel("exit direction, wall frame (deg)\n<90 = continue along wall    >90 = reverse / turn back")
-    ax.set_ylabel("count")
-    ax.set_title(f"bounce: continue vs reverse  (reverse {100 * rev:.0f}%)")
-    ax.legend(fontsize=7); ax.spines[["top", "right"]].set_visible(False)
+    ok = ~np.isnan(od) & (inc >= MIN_INCIDENCE)
+    odk, inck = od[ok], inc[ok]
+    rev = np.mean(odk > 90)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4.3),
+                                   gridspec_kw={"width_ratios": [2, 1]})
+    # pooled exit-direction distribution, filled, continue/reverse shaded
+    ax1.axvspan(0, 90, color="#228833", alpha=0.08, zorder=0)
+    ax1.axvspan(90, 180, color="#cc3311", alpha=0.08, zorder=0)
+    ax1.hist(odk, bins=np.linspace(0, 180, 16), color="0.45", edgecolor="white", zorder=2)
+    ax1.axvline(90, color="0.3", ls="--", lw=1.2)
+    top = ax1.get_ylim()[1]
+    ax1.text(45, top * 0.96, "continue", ha="center", va="top", color="#228833", fontsize=11)
+    ax1.text(135, top * 0.96, "reverse", ha="center", va="top", color="#cc3311", fontsize=11)
+    ax1.set_xlim(0, 180); ax1.set_xticks([0, 45, 90, 135, 180])
+    ax1.set_xlabel("exit direction, wall frame (deg)")
+    ax1.set_ylabel("count")
+    ax1.set_title(f"exit direction (n={len(odk)}):  {100 * rev:.0f}% reverse, "
+                  f"~flat = random", fontsize=10)
+    ax1.spines[["top", "right"]].set_visible(False)
+    # reverse fraction by incidence bin
+    fr = [np.mean(odk[(inck >= lo) & (inck < hi)] > 90) for lo, hi in BINS]
+    ns = [int(np.sum((inck >= lo) & (inck < hi))) for lo, hi in BINS]
+    ax2.bar(range(len(BINS)), [100 * f for f in fr], color=BIN_COLORS)
+    ax2.axhline(50, color="0.5", ls="--", lw=1)
+    ax2.set_xticks(range(len(BINS)))
+    ax2.set_xticklabels([f"{lo}-{hi}\n(n={n})" for (lo, hi), n in zip(BINS, ns)], fontsize=8)
+    ax2.set_ylabel("% reverse"); ax2.set_ylim(0, 100)
+    ax2.set_title("reverse % by incidence\n(flat = independent of approach)", fontsize=10)
+    ax2.spines[["top", "right"]].set_visible(False)
     save_fig(fig, "reflection.png", subdir=sub); plt.close(fig)
 
 
@@ -185,6 +207,42 @@ def glitched(b):
     return len(v) > 0 and v.min() < -CROSS_TOL
 
 
+def plot_intuition(groups, tau, sub):
+    """Per incidence bin, the individual bounces (faint) behind the mean (bold), same
+    frame/scale as binned_all. Top row = approach (structured, fans by incidence);
+    bottom row = departure (random, sprays out, so its mean collapses)."""
+    rows = [("approach", (tau >= -8) & (tau <= 0.5)),
+            ("departure", (tau >= -0.5) & (tau <= 10))]
+    fig, axes = plt.subplots(2, len(BINS), figsize=(4.5 * len(BINS), 9),
+                             sharex=True, sharey=True)
+    for r, (lab, win) in enumerate(rows):
+        for c, ((lo, hi), col) in enumerate(zip(BINS, BIN_COLORS)):
+            ax = axes[r, c]
+            g = groups[(lo, hi)]
+            ax.axhspan(-bo.LASER_MARGIN - bo.WALL_TH / 2, bo.LASER_MARGIN + bo.WALL_TH / 2,
+                       color="red", alpha=0.12, zorder=0)
+            ax.axhspan(-bo.WALL_TH / 2, bo.WALL_TH / 2, color="0.4", zorder=1)
+            for b in g:
+                ax.plot(b["U"][win], b["V"][win], color=col, alpha=0.12, lw=0.6, zorder=2)
+            U = np.nanmean(np.array([b["U"][win] for b in g]), 0)
+            V = np.nanmean(np.array([b["V"][win] for b in g]), 0)
+            ax.plot(U, V, color="k", lw=3, zorder=4)
+            ax.spines[["top", "right"]].set_visible(False)
+            if r == 0:
+                ax.set_title(f"{lo}-{hi} deg  (n={len(g)})", color=col, fontsize=11)
+            else:
+                ax.set_xlabel("along wall (mm)")
+            if c == 0:
+                ax.set_ylabel(f"{lab.upper()}\ndistance from wall (mm)", fontsize=9)
+    axes[0, 0].set_ylim(-8, 42); axes[0, 0].set_xlim(-62, 55)
+    fig.suptitle("real bounces per incidence bin (faint = individuals, bold = mean):  "
+                 "top = approach, fans by incidence  |  bottom = departure, random spray",
+                 fontsize=11)
+    fig.tight_layout(rect=(0, 0, 1, 0.97))
+    save_fig(fig, "intuition_examples.png", subdir=sub)
+    plt.close(fig)
+
+
 def main():
     group = []
     for f in EXPERIMENTS:
@@ -193,17 +251,26 @@ def main():
         print(f"  {f.split('/')[-1]}: {len(b)} bounces")
     group = [b for b in group if not glitched(b)]          # drop collision glitches only
     print(f"total bounces: {len(group)} (after glitch drop; walk-arounds kept)")
+
+    good = load_good()
+    if good is not None:
+        before = len(group)
+        group = [b for b in group if (b["eid"], b["i"]) in good]
+        print(f"restricted to curated good bounces: {len(group)}/{before} "
+              f"(from {len(good)} tagged in {os.path.basename(bo.GOOD_CSV)})")
+    base = ("bounces_good" if good is not None else "bounces") + ("" if MODE == "good" else "_all")
     tau = group[0]["tau"]
 
     kept = [b for b in group if b["incidence"] >= MIN_INCIDENCE]
     groups = {(lo, hi): [b for b in kept if lo <= b["incidence"] < hi] for lo, hi in BINS}
     for W in WINDOWS_S:
-        sub = f"bounces/{W}s"
+        sub = f"{base}/{W}s"
         plot_all(group, tau, W, sub)
         plot_binned(groups, tau, W, sub)
         plot_scatter(group, sub)
         plot_reflection(group, sub)
-    print("done")
+    plot_intuition(groups, tau, f"{base}/30s")
+    print(f"done -> plots/{base}/")
 
 
 if __name__ == "__main__":
