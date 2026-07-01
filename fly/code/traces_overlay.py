@@ -42,7 +42,7 @@ def overlay(window):
               borderaxespad=0)
     suffix = "" if window is None else f"_{window[0]}_{window[1]}s"
     title = "all flies" + ("" if window is None else f" · {window[0]}-{window[1]}s")
-    save_fig(fig, f"_all_flies_overlay{suffix}.png", subdir="traces", title=title)
+    save_fig(fig, f"_all_flies_overlay{suffix}.png", subdir="traces", title=title, dpi=1400)
 
 
 def juxtapose(window):
@@ -71,7 +71,7 @@ def juxtapose(window):
     add_scalebar(ax)
     suffix = "" if window is None else f"_{window[0]}_{window[1]}s"
     title = "all flies (juxtaposed)" + ("" if window is None else f" · {window[0]}-{window[1]}s")
-    save_fig(fig, f"_all_flies_juxtaposed{suffix}.png", subdir="traces", title=title)
+    save_fig(fig, f"_all_flies_juxtaposed{suffix}.png", subdir="traces", title=title, dpi=1400)
 
 
 def main():

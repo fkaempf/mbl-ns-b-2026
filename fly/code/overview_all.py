@@ -20,7 +20,9 @@ from utils import DATA_DIR, draw_trajectory, load_trajectory, save_fig
 # (label, t_start_s, t_end_s); the fourth panel is the full track.
 WINDOWS = [("0-15 min", 0, 900), ("15-30 min (confinement?)", 900, 1800),
            ("30+ min", 1800, np.inf)]
-STRIDE = 5  # plot every Nth sample (120 Hz -> 24 Hz) to keep figures light
+STRIDE = 5       # plot every Nth sample (120 Hz -> 24 Hz) to keep figures light
+DPI = 720        # output resolution (lower e.g. 250 for fast triage of many runs)
+DATASETS = None  # None = every dataset under data/; else a list of top-level folders
 
 
 def overview(folder):
@@ -38,14 +40,15 @@ def overview(folder):
         else:
             ax.axis("off")
         ax.set_title(name, fontsize=9)
-    save_fig(fig, f"{eid}.png", title=rel, subdir="traces")
+    save_fig(fig, f"{eid}.png", title=rel, subdir="traces", dpi=DPI)
     plt.close(fig)
     return rel, time_s[-1] / 60
 
 
-if __name__ == "__main__":
-    csvs = sorted(glob.glob(
-        os.path.join(DATA_DIR, "**", "*fictrac_node_fulltrack.csv"), recursive=True))
+def main():
+    roots = DATASETS or [""]
+    csvs = sorted(c for r in roots for c in glob.glob(
+        os.path.join(DATA_DIR, r, "**", "*fictrac_node_fulltrack.csv"), recursive=True))
     print(f"{len(csvs)} experiments found")
     for c in csvs:
         try:
@@ -53,3 +56,7 @@ if __name__ == "__main__":
             print(f"  ok   {rel}  ({dur:.0f} min)")
         except Exception as e:
             print(f"  FAIL {c}: {e}")
+
+
+if __name__ == "__main__":
+    main()
