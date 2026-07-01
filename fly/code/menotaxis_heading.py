@@ -37,7 +37,7 @@ def wrap(a):
     return (a + np.pi) % (2 * np.pi) - np.pi
 
 
-MIN_SPEED = 1.0  # mm/s — only count heading while the fly is actually walking
+MIN_SPEED = 5.0  # mm/s — only count heading while the fly is actually walking
 
 
 def analyse_window(name):
