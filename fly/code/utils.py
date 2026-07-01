@@ -134,13 +134,27 @@ def experiment_id(folder):
     return os.path.basename(os.path.normpath(folder))
 
 
-def add_scalebar(ax):
-    """Add a 10 cm scale bar to the lower-right of a trajectory axis."""
+def add_scalebar(ax, loc='lower right'):
+    """Add a 10 cm scale bar to a trajectory axis (``loc`` = any legend-style corner)."""
     ax.add_artist(AnchoredSizeBar(
-        ax.transData, 100, '10 cm', loc='lower right',
-        bbox_to_anchor=(0.95, 0.05), bbox_transform=ax.transAxes,
-        pad=0.5, color='black', frameon=False, size_vertical=1,
+        ax.transData, 100, '10 cm', loc=loc,
+        pad=0.6, color='black', frameon=False, size_vertical=1,
     ))
+
+
+def emptiest_corner(ax, x, y, frac=0.33):
+    """Pick the axis corner (legend ``loc`` string) with the fewest trace points, so
+    a scale bar / legend placed there dodges the trajectory."""
+    x, y = np.asarray(x), np.asarray(y)
+    m = np.isfinite(x) & np.isfinite(y)
+    x, y = x[m], y[m]
+    (x0, x1), (y0, y1) = ax.get_xlim(), ax.get_ylim()
+    rx, ry = frac * (x1 - x0), frac * (y1 - y0)
+    corners = {'lower right': (x1, y0), 'lower left': (x0, y0),
+               'upper right': (x1, y1), 'upper left': (x0, y1)}
+    return min(corners, key=lambda loc:
+               int(np.sum((np.abs(x - corners[loc][0]) < rx) &
+                          (np.abs(y - corners[loc][1]) < ry))))
 
 
 def draw_trajectory(ax, x, y, *, mark_start=False, scalebar=True, title=None):
