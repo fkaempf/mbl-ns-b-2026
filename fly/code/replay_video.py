@@ -64,10 +64,11 @@ def main():
         dot, = ax.plot([], [], "o", color="k", ms=4)
         wps = []
         for won, woff, cx, cy, rot, w, th in d["walls"]:
+            ang = -rot                   # vrcmd rotation_z is y-flipped vs the vrx/vry frame
             heat = Rectangle((cx - w / 2, cy - th / 2 - LASER_MARGIN), w, th + 2 * LASER_MARGIN,
-                             angle=rot, rotation_point="center", facecolor="red", alpha=0.18,
+                             angle=ang, rotation_point="center", facecolor="red", alpha=0.18,
                              edgecolor="none", visible=False, zorder=1)
-            wall = Rectangle((cx - w / 2, cy - th / 2), w, th, angle=rot, rotation_point="center",
+            wall = Rectangle((cx - w / 2, cy - th / 2), w, th, angle=ang, rotation_point="center",
                              facecolor="0.35", edgecolor="k", lw=0.4, visible=False, zorder=2)
             ax.add_patch(heat); ax.add_patch(wall)
             wps.append((won, woff, heat, wall))

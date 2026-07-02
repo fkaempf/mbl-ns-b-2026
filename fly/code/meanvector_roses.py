@@ -73,7 +73,9 @@ def gather():
             m = (t >= ton) & (t <= toff)
             if m.sum() <= WIN:
                 continue
-            brg = wrap(np.degrees(np.arctan2(cy - y[m], cx - x[m])) - h[m])
+            # vrh is in the y-flipped VR frame; the egocentric wall bearing (0 = wall dead
+            # ahead) is atan2(dy,dx) + h - 90, verified at wall spawn (circ-mean +0.2 deg).
+            brg = wrap(np.degrees(np.arctan2(cy - y[m], cx - x[m])) + h[m] - 90)
             for key, msk in (("wall_run", run[m]), ("wall_stand", stand[m])):
                 a, r = windows_mv(brg, msk)
                 out[key][0].extend(a); out[key][1].extend(r)

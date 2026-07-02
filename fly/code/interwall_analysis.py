@@ -165,12 +165,13 @@ def draw_wall(ax, wall, faint=False):
     """One wall (true width x thickness from config) + its laser hurt zone. ``faint``
     dims it for the wall that has just been removed (gone during the trial)."""
     cx, cy, rot, w, th = wall
+    ang = -rot                       # vrcmd rotation_z is y-flipped vs the vrx/vry frame
     hx, hy = w / 2 + LASER_MARGIN_X, th / 2 + LASER_MARGIN_Y
     zone_a, wall_a = (0.02, 0.05) if faint else (0.04, 0.1)
-    ax.add_patch(Rectangle((cx - hx, cy - hy), 2 * hx, 2 * hy, angle=rot,
+    ax.add_patch(Rectangle((cx - hx, cy - hy), 2 * hx, 2 * hy, angle=ang,
                            rotation_point="center", facecolor="red", alpha=zone_a,
                            edgecolor="none", zorder=1))
-    ax.add_patch(Rectangle((cx - w / 2, cy - th / 2), w, th, angle=rot,
+    ax.add_patch(Rectangle((cx - w / 2, cy - th / 2), w, th, angle=ang,
                            rotation_point="center", facecolor="0.4", alpha=wall_a,
                            edgecolor="none", zorder=1))
 

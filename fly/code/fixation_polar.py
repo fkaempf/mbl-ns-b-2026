@@ -42,11 +42,13 @@ def egocentric(folder):
         if m.sum() < 5:
             continue
         fx, fy = x[m], y[m]
-        dx, dy = np.cos(np.radians(rot)), np.sin(np.radians(rot))     # nearest point on the wall
+        # wall long-axis in the vrx/vry frame is -rot (vrcmd rotation_z is y-flipped)
+        dx, dy = np.cos(np.radians(-rot)), np.sin(np.radians(-rot))   # nearest point on the wall
         proj = np.clip((fx - cx) * dx + (fy - cy) * dy, -w / 2, w / 2)
         nx, ny = cx + proj * dx, cy + proj * dy
         ang = np.degrees(np.arctan2(ny - fy, nx - fx))
-        Bh += list(wrap(ang - h[m]))
+        # egocentric bearing relative to facing: atan2 + h - 90 (vrh is y-flipped)
+        Bh += list(wrap(ang + h[m] - 90))
         Bm += list(wrap(ang - mvdir[m]))
         D += list(np.hypot(nx - fx, ny - fy))
     return np.array(Bh), np.array(Bm), np.array(D)
