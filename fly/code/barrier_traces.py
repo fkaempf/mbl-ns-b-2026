@@ -31,6 +31,7 @@ from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.patches import Rectangle
 
 from utils import DATA_DIR, PLOTS_DIR, add_scalebar, experiment_label, load_combined
+from cxstyle import PINK
 
 # None = plot every experiment in BARRIER_DATASET that has a barrier + a vrpos.
 EXPERIMENTS = None
@@ -56,8 +57,8 @@ VARIANTS = [("angles", True, False), ("arrows", False, True), ("plain", False, F
 SUBDIR = "barriers"
 STRIDE = 3          # thin the trace for a lighter (still vector) LineCollection
 
-# blue colourmap truncated so even early time is a visible (not near-white) blue
-BLUES = LinearSegmentedColormap.from_list("blues_t", plt.cm.Blues(np.linspace(0.3, 1.0, 256)))
+# white -> pink over time (matches the FC2 scheme; both ends read on a black slide)
+BLUES = LinearSegmentedColormap.from_list("cx_white_pink", ["#ffffff", PINK])
 
 
 def barriers(folder):
@@ -123,15 +124,19 @@ def fly_state_at(df, times):
 
 
 def add_barriers(ax, walls):
-    """Each barrier as a grey wall inside its red laser ("heat") zone."""
+    """Each barrier as a grey wall inside its red laser ("heat") zone. The vrcmd
+    rotation_z is in the y-flipped VR frame, so in the vrx/vry position frame the wall's
+    drawing angle is -rot (verified against the laser-shocked positions: they lie along
+    -rot, not +rot)."""
     for cx, cy, rot, w, th, _ in walls:
+        ang = -rot
         hw, hth = w + 2 * LASER_MARGIN_X, th + 2 * LASER_MARGIN_Y
-        ax.add_patch(Rectangle((cx - hw / 2, cy - hth / 2), hw, hth, angle=rot,
+        ax.add_patch(Rectangle((cx - hw / 2, cy - hth / 2), hw, hth, angle=ang,
                                rotation_point="center", facecolor="red", alpha=0.3,
                                edgecolor="red", lw=0.6, zorder=2))
-        ax.add_patch(Rectangle((cx - w / 2, cy - th / 2), w, th, angle=rot,
+        ax.add_patch(Rectangle((cx - w / 2, cy - th / 2), w, th, angle=ang,
                                rotation_point="center", facecolor="0.35",
-                               edgecolor="black", lw=0.8, zorder=3))
+                               edgecolor="white", lw=0.8, zorder=3))
 
 
 def add_angle_labels(ax, walls, h):
@@ -167,7 +172,7 @@ def draw_trace(name, df, walls, intervals, h, good, variant, angles, arrows):
         on = [a for a, _ in intervals]
         ax.scatter(np.interp(on, tu, x), np.interp(on, tu, y), color="red", s=10,
                    zorder=6, linewidths=0)
-    ax.scatter(x[0], y[0], color="black", s=30, zorder=5)        # start of trace
+    ax.scatter(x[0], y[0], color="white", s=30, zorder=5)        # start of trace
     add_barriers(ax, walls)
     if angles:
         add_angle_labels(ax, walls, h)
@@ -179,14 +184,14 @@ def draw_trace(name, df, walls, intervals, h, good, variant, angles, arrows):
     tag = "★ GOOD · " if good else ""
     extra = " · green = heading@create" if (angles or arrows) else ""
     ax.set_title(f"{tag}{name} · {len(walls)} barriers · red = shock{extra}",
-                 color="green" if good else "black")
+                 color="#66ff66" if good else "white")
     if good:
         fig.add_artist(plt.Rectangle((0.01, 0.01), 0.98, 0.98, transform=fig.transFigure,
                                      fill=False, edgecolor="green", lw=5, zorder=10))
     out = os.path.join(PLOTS_DIR, SUBDIR, variant)
     os.makedirs(out, exist_ok=True)
     fig.savefig(os.path.join(out, f"{'GOOD_' if good else ''}{name}_barriers.pdf"),
-                bbox_inches="tight")
+                bbox_inches="tight", facecolor="black")
     plt.close(fig)
 
 

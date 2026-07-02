@@ -32,8 +32,8 @@ def _tmp(ext):
 
 def divider_pdf(title):
     fig = plt.figure(figsize=(11, 8.5))
-    fig.text(0.5, 0.5, title, ha="center", va="center", fontsize=22, weight="bold")
-    p = _tmp("pdf"); fig.savefig(p); plt.close(fig)
+    fig.text(0.5, 0.5, title, ha="center", va="center", fontsize=22, weight="bold", color="white")
+    p = _tmp("pdf"); fig.savefig(p, facecolor="black"); plt.close(fig)
     return p
 
 
@@ -41,8 +41,8 @@ def png_pdf(png, caption):
     fig = plt.figure(figsize=(11, 8.5))
     ax = fig.add_axes([0.02, 0.02, 0.96, 0.92])
     ax.imshow(mpimg.imread(png)); ax.axis("off")
-    fig.text(0.5, 0.965, caption, ha="center", va="center", fontsize=9)
-    p = _tmp("pdf"); fig.savefig(p, dpi=150); plt.close(fig)
+    fig.text(0.5, 0.965, caption, ha="center", va="center", fontsize=9, color="white")
+    p = _tmp("pdf"); fig.savefig(p, dpi=150, facecolor="black"); plt.close(fig)
     return p
 
 
