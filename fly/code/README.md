@@ -2,7 +2,8 @@
 
 Analysis and plotting of tethered-fly walking data: FicTrac `fulltrack` CSV exports
 (ball-on-air trajectory + heading) and the Unity VR `vrpos` logs (virtual position +
-heading).
+heading). A subset of flies also have two-photon FC2 fan-shaped-body imaging, fused
+onto the same clock by `imaging_unify.py`.
 
 ## Layout
 
@@ -25,7 +26,6 @@ code/
 
   barrier_traces.py             all barrier runs as vector PDF: trace + walls, red while
                                 shocked, heading@create; good runs marked; angles/arrows/plain
-  barrier_approaches.py         fly's reaction to one barrier over time, barrier-aligned
 
   bounces.py                    bounce compute: laser-on detection, wall-aligned frames,
                                 incidence/exit angles, the good_set() curation helper
@@ -41,6 +41,19 @@ code/
                                 (double-click start_bounce_select.command to launch)
   wall_trials.py                wall-presentation trials (wall-ON to wall-OFF, paired by
                                 serial): wall-frame trajectories, approach/retreat, summary
+
+  imaging_unify.py              fuse FC2 fan-shaped-body imaging (16 columns) with the VR +
+                                barrier + laser task per fly -> data/imaging0630/<fly>_unified.pkl
+  imaging_video.py              per-trial movie: raw imaging + bump/heading compass +
+                                unwrapped column raster + trajectory with the wall
+  cxstyle.py, fc2_utils.py      presentation style (pink/yellow/white, SVG) + imaging helpers
+
+  make_review_pdf.py            compile the key figures into a multi-page review PDF
+  replay_video.py               animate all good runs on one common clock (grid)
+
+  (exploratory)                 one-off scripts that write to plots/exploratory/
+                                (heading_*, shock_*, escape_*, intertrial_*, meanvector_roses,
+                                stimulus_split, state_dynamics, ...)
 ```
 
 Barriers (paradigm `eternarig_experiment_logic_barrier`) are `RectMaze` walls
@@ -71,6 +84,8 @@ plots/
   controls/       confinement vs menotaxis control panels
   menotaxis/      menotaxis heading panels
   heading/        VR heading histograms, before/after scatter, sampling traces
+  imaging/        FC2 imaging: bump-vs-time per experiment, per-trial figures, videos/
+  exploratory/    one-off exploratory analyses
 ```
 
 ## The experiment

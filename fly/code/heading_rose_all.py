@@ -1,4 +1,4 @@
-"""Preferred-heading mean-vector rose for every good run (the heading_rose_pair grid).
+"""Preferred-heading mean-vector rose for every good run (a grid, one rose per run).
 
 For each good run: the walking-heading distribution (vrh, moving samples) as a rose, with
 the early-half (green) and late-half (red) mean heading VECTORS drawn as arrows whose
