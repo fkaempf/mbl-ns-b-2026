@@ -8,6 +8,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
 
+from cxstyle import apply_style, rasterize_heavy, PREVIEW_BG
+
+apply_style()          # repo-wide: editable-text SVG, transparent canvas, white foreground
+
 # FicTrac integrated_position is in radians of ball rotation;
 # multiply by the ball radius (mm) to get lab-frame distance.
 BALL_RADIUS_MM = 3.065
@@ -170,20 +174,31 @@ def draw_trajectory(ax, x, y, *, mark_start=False, scalebar=True, title=None):
         ax.set_title(title, fontsize=9)
 
 
-def save_fig(fig, filename, title=None, subdir=None, dpi=450):
+def save_fig(fig, filename, title=None, subdir=None, dpi=450, svg_subdir=None):
     """Save ``fig`` into :data:`PLOTS_DIR` (or a ``subdir`` of it), created if needed.
 
     ``title`` is added as a figure suptitle so the saved image names its source data.
     ``subdir`` groups a set of standalone panels into their own folder. ``dpi`` raises
-    the output resolution for detailed figures.
+    the output resolution for detailed figures. The vector SVG always goes in its own
+    folder, apart from the PNG preview: by default a ``svg/`` subfolder of the PNG's
+    folder; pass ``svg_subdir`` (relative to PLOTS_DIR) to override that location.
     """
     if title:
         fig.suptitle(title, fontsize=10)
     out = PLOTS_DIR if subdir is None else os.path.join(PLOTS_DIR, subdir)
     os.makedirs(out, exist_ok=True)
-    # bbox_inches='tight' trims the surrounding whitespace so the saved image fits
-    # its content (trajectories use equal aspect, which otherwise leaves wide margins).
-    fig.savefig(os.path.join(out, filename), dpi=dpi, bbox_inches='tight')
+    svg_out = os.path.join(out, "svg") if svg_subdir is None else os.path.join(PLOTS_DIR, svg_subdir)
+    os.makedirs(svg_out, exist_ok=True)
+    stem = os.path.splitext(filename)[0]
+    rasterize_heavy(fig)              # bake heavy imaging/scatter layers so the SVG stays small
+    # SVG is the deliverable (vector, editable text, transparent) for slides / the paper;
+    # bbox_inches='tight' trims surrounding whitespace to the content.
+    fig.savefig(os.path.join(svg_out, stem + ".svg"), format="svg", transparent=True,
+                bbox_inches="tight", dpi=600)
+    # a black-background PNG alongside it, for quick preview and the review PDF (the
+    # white foreground only shows on a dark canvas).
+    fig.savefig(os.path.join(out, stem + ".png"), facecolor=PREVIEW_BG,
+                bbox_inches="tight", dpi=dpi)
 
 
 def save_panel(subdir, filename, draw, *, figsize=(6.5, 5), title=None, subplot_kw=None):
